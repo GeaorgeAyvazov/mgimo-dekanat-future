@@ -14,8 +14,9 @@ import {
   reply,
   seed,
   updateRequest,
+  notificationList,
+  cancelRequest,
 } from "@/lib/server";
-import { notices } from "@/lib/demo-data";
 import { certificate } from "@/lib/pdf";
 import { services } from "@/lib/catalog";
 async function handle(req: Request) {
@@ -57,6 +58,8 @@ async function handle(req: Request) {
         return await updateRequest(req, user, path[1]);
       if (path[1] && path[2] === "reply" && req.method === "POST")
         return await reply(req, user, path[1]);
+      if (path[1] && path[2] === "cancel" && req.method === "POST")
+        return await cancelRequest(req, user, path[1]);
     }
     if (path[0] === "favorites" && req.method === "POST") {
       if (user.role !== "student")
@@ -83,7 +86,7 @@ async function handle(req: Request) {
     }
     if (path[0] === "notifications" && req.method === "POST") {
       const id = field(await body(req), "id", 100),
-        valid = notices(user.id).map((n) => n.id);
+        valid = (await notificationList(user)).map((n) => n.id);
       if (id !== "all" && !valid.includes(id))
         throw new ApiError(400, "Уведомление не найдено");
       await database().batch(

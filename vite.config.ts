@@ -57,6 +57,10 @@ export default defineConfig(async ({ command }) => {
       sites({ mockAuth: !managedLinux }),
       connectorPreview(),
       cloudflare({
+        // Optional isolated local QA database; production bindings are unchanged.
+        ...(command === "serve" && process.env.PORTAL_QA_STATE
+          ? { persistState: { path: process.env.PORTAL_QA_STATE } }
+          : {}),
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
         config: {

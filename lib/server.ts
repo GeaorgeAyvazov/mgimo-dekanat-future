@@ -7,6 +7,7 @@ import {
   type Student,
   type Case,
   type CaseEvent,
+  type Notice,
 } from "./catalog";
 import { DEMO_HASH } from "./demo-hash";
 export type UserRow = Student & { password_hash: string; grades: string };
@@ -257,6 +258,62 @@ export async function logout(req: Request) {
       .run();
   return json({ ok: true }, 200, { "Set-Cookie": cookie("", req, 0) });
 }
+export async function notificationList(
+  user: UserRow,
+): Promise<Omit<Notice, "read">[]> {
+  const announcements = notices(user.id);
+  if (user.role !== "student") return announcements;
+  const rows = await database()
+    .prepare(
+      "SELECT e.id,e.status,e.comment,e.created_at,r.id AS request_id,r.service,r.format,r.status AS request_status FROM request_events e JOIN requests r ON r.id=e.request_id WHERE r.owner_id=? AND e.status IN ('ready','needs_info','cancelled') ORDER BY e.created_at DESC,e.id DESC LIMIT 100",
+    )
+    .bind(user.id)
+    .all<{
+      id: string;
+      status: string;
+      comment: string;
+      created_at: string;
+      request_id: string;
+      service: string;
+      format: string;
+      request_status: string;
+    }>();
+  const personal = rows.results.map((e) => {
+    const service = services.find((s) => s.id === e.service)!;
+    const title =
+      e.status === "needs_info"
+        ? e.request_status === "needs_info"
+          ? "По обращению нужно уточнение"
+          : "Запрос уточнения сохранён в истории"
+        : e.status === "cancelled"
+          ? "Заявка отменена"
+          : e.service === "question"
+            ? "Получен ответ на ваш вопрос"
+            : e.format === "paper"
+              ? "Бумажный документ готов к выдаче"
+              : "Документ готов к скачиванию";
+    return {
+      id: `request-event:${e.id}`,
+      title,
+      text: `${service.title}. ${e.comment}`,
+      date: e.created_at,
+      type: "request",
+      link: "case",
+      requestId: e.request_id,
+      actionLabel:
+        e.status === "needs_info"
+          ? e.request_status === "needs_info"
+            ? "Ответить на уточнение"
+            : "Открыть историю"
+          : e.status === "ready" && e.service === "question"
+            ? "Прочитать ответ"
+            : "Открыть заявку",
+    };
+  });
+  return [...personal, ...announcements].sort(
+    (a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id),
+  );
+}
 export async function overview(user: UserRow) {
   const db = database(),
     cases =
@@ -286,7 +343,7 @@ export async function overview(user: UserRow) {
     requests: cases.results,
     grades: JSON.parse(user.grades),
     lessons: user.role === "student" ? lessons(user.id) : [],
-    notices: notices(user.id).map((n) => ({
+    notices: (await notificationList(user)).map((n) => ({
       ...n,
       read: read.results.some((r) => r.notice_id === n.id),
     })),
@@ -484,12 +541,17 @@ export async function updateRequest(req: Request, user: UserRow, id: string) {
 }
 export async function reply(req: Request, user: UserRow, id: string) {
   const row = await ownedRequest(id, user);
-  if (user.role !== "student" || row.status !== "needs_info")
-    throw new ApiError(400, "Ответ сейчас не требуется");
+  if (user.role !== "student")
+    throw new ApiError(403, "Ответ доступен студенту");
+  if (row.status !== "needs_info")
+    throw new ApiError(
+      409,
+      "Статус уже изменился. Обновите карточку; ваш текст остаётся в поле",
+    );
   const comment = field(await body(req), "comment", 1000);
   if (comment.length < 5) throw new ApiError(400, "Напишите ответ подробнее");
   const db = database();
-  await db.batch([
+  const result = await db.batch([
     db
       .prepare(
         "INSERT INTO request_events (id,request_id,status,comment,created_at) SELECT ?,id,'working',?,? FROM requests WHERE id=? AND owner_id=? AND status='needs_info'",
@@ -507,5 +569,37 @@ export async function reply(req: Request, user: UserRow, id: string) {
       )
       .bind(id, user.id),
   ]);
+  if (!result[1].meta.changes)
+    throw new ApiError(
+      409,
+      "Статус уже изменился. Обновите карточку; ваш текст остаётся в поле",
+    );
+  return json(await ownedRequest(id, user));
+}
+export async function cancelRequest(req: Request, user: UserRow, id: string) {
+  if (user.role !== "student")
+    throw new ApiError(403, "Самостоятельная отмена доступна студенту");
+  const row = await ownedRequest(id, user),
+    data = await body(req);
+  if (data.expectedStatus !== "created" || row.status !== "created")
+    throw new ApiError(
+      409,
+      "Отмена доступна, пока заявка не взята в работу. Обновите карточку",
+    );
+  const db = database(),
+    result = await db.batch([
+      db
+        .prepare(
+          "INSERT INTO request_events (id,request_id,status,comment,created_at) SELECT ?,id,'cancelled','Заявка отменена студентом до начала обработки',? FROM requests WHERE id=? AND owner_id=? AND status='created'",
+        )
+        .bind(crypto.randomUUID(), now(), id, user.id),
+      db
+        .prepare(
+          "UPDATE requests SET status='cancelled' WHERE id=? AND owner_id=? AND status='created'",
+        )
+        .bind(id, user.id),
+    ]);
+  if (!result[1].meta.changes)
+    throw new ApiError(409, "Заявка уже взята в работу. Обновите карточку");
   return json(await ownedRequest(id, user));
 }

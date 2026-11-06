@@ -157,6 +157,8 @@ export type Notice = {
   date: string;
   read: boolean;
   link?: string;
+  requestId?: string;
+  actionLabel?: string;
 };
 export function dateLabel(value: string, time = false) {
   return new Intl.DateTimeFormat("ru-RU", {

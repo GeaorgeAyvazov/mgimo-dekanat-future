@@ -507,6 +507,75 @@
   margin-top: 15px;
 }
 /* Institutional sign-in: identity, form and jury accounts. */
+.cancel-request {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.cancel-request > div:first-child {
+  flex: 1;
+  min-width: 220px;
+}
+.cancel-request h2 {
+  font-size: 16px;
+}
+.cancel-request p {
+  font-size: 12px;
+  color: #76849b;
+  line-height: 20px;
+  margin-top: 7px;
+  max-width: 590px;
+}
+.cancel-request-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cancel-request > .error {
+  width: 100%;
+  margin-top: 0;
+}
+.cancel-confirm {
+  background: #a6373e;
+  color: white;
+}
+.cancel-confirm:hover {
+  background: #8b2b31;
+}
+.cancelled-info {
+  margin-bottom: 22px;
+}
+.notice-icon.request {
+  background: #edf4ff;
+  color: #0050cf;
+}
+@media (max-width: 700px) {
+  .cancel-request {
+    gap: 15px;
+  }
+  .cancel-request > div:first-child {
+    min-width: 0;
+    flex: auto;
+    width: 100%;
+  }
+  .cancel-request > .button,
+  .cancel-request-actions {
+    width: 100%;
+  }
+  .cancel-request-actions > .button {
+    flex: 1;
+    font-size: 11px;
+  }
+  .cancel-request p {
+    font-size: 12px;
+  }
+  .cancel-request h2 {
+    font-size: 16px;
+  }
+}
 .login-screen {
   display: block;
   min-height: 100vh;

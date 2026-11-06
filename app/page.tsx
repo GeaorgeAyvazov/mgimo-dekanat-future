@@ -379,6 +379,36 @@ export default function Portal() {
     return () => window.removeEventListener("hashchange", read);
   }, []);
   useEffect(() => {
+    const userId = data?.user.id;
+    if (!userId) return;
+    let alive = true,
+      inFlight = false;
+    async function sync() {
+      if (document.visibilityState !== "visible" || inFlight) return;
+      inFlight = true;
+      try {
+        const next = await api("overview");
+        if (alive && next.user.id === userId) {
+          setData(next);
+          setLoadError("");
+        }
+      } catch (e) {
+        if (alive && (e as { status?: number }).status === 401) setData(null);
+      } finally {
+        inFlight = false;
+      }
+    }
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", sync);
+    const interval = setInterval(() => void sync(), 30000);
+    return () => {
+      alive = false;
+      clearInterval(interval);
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [data?.user.id]);
+  useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 5000);
     return () => clearTimeout(t);
@@ -717,7 +747,10 @@ export default function Portal() {
           <button
             className={`icon-btn notification-button ${view === "notifications" ? "selected" : ""}`}
             aria-label={`Уведомления${unread ? `, непрочитанных: ${unread}` : ""}`}
-            onClick={() => go("notifications")}
+            onClick={async () => {
+              await refresh();
+              go("notifications");
+            }}
           >
             <Bell size={22} />
             {unread > 0 && <span className="notification-dot" />}
@@ -1188,7 +1221,7 @@ export default function Portal() {
             <>
               <PageHeading
                 title="Уведомления"
-                text="Важное от деканата и изменения в учёбе."
+                text="Ответы по обращениям, готовые документы и изменения в учёбе."
                 action={
                   <button
                     className="button secondary"
@@ -1207,7 +1240,9 @@ export default function Portal() {
                     className={`panel notice-card ${n.read ? "read" : "unread"}`}
                   >
                     <span className={`notice-icon ${n.type}`}>
-                      {n.type === "schedule" ? (
+                      {n.type === "request" ? (
+                        <FileText size={23} />
+                      ) : n.type === "schedule" ? (
                         <CalendarDays size={23} />
                       ) : n.type === "deadline" ? (
                         <Clock3 size={23} />
@@ -1218,13 +1253,15 @@ export default function Portal() {
                     <div>
                       <div className="notice-meta">
                         <span>
-                          {n.type === "schedule"
-                            ? "Расписание"
-                            : n.type === "deadline"
-                              ? "Дедлайн"
-                              : "Сервисный центр"}
+                          {n.type === "request"
+                            ? "Мои обращения"
+                            : n.type === "schedule"
+                              ? "Расписание"
+                              : n.type === "deadline"
+                                ? "Дедлайн"
+                                : "Сервисный центр"}
                         </span>
-                        <time>{dateLabel(n.date)}</time>
+                        <time>{dateLabel(n.date, n.type === "request")}</time>
                         {!n.read && <span className="unread-label">Новое</span>}
                       </div>
                       <h2>{n.title}</h2>
@@ -1234,6 +1271,10 @@ export default function Portal() {
                           className="text-button"
                           onClick={() => {
                             void readNotices(n.id);
+                            if (n.requestId) {
+                              go("case", n.requestId);
+                              return;
+                            }
                             go(
                               n.type === "deadline"
                                 ? "order"
@@ -1242,11 +1283,12 @@ export default function Portal() {
                             );
                           }}
                         >
-                          {n.type === "schedule"
-                            ? "Открыть расписание"
-                            : n.type === "deadline"
-                              ? "Заказать транскрипт"
-                              : "К справкам"}
+                          {n.actionLabel ||
+                            (n.type === "schedule"
+                              ? "Открыть расписание"
+                              : n.type === "deadline"
+                                ? "Заказать транскрипт"
+                                : "К справкам")}
                           <ArrowRight size={15} />
                         </button>
                         {!n.read && (
@@ -1707,6 +1749,7 @@ function CaseDetail({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [comment, setComment] = useState(""),
+    [confirmCancel, setConfirmCancel] = useState(false),
     [nextStatus, setNextStatus] = useState(
       item.status === "created"
         ? "working"
@@ -1733,6 +1776,18 @@ function CaseDetail({
       setBusy(false);
     }
   }
+  async function cancel() {
+    setBusy(true);
+    setError("");
+    try {
+      await api(`requests/${item.id}/cancel`, { expectedStatus: "created" });
+      await onChange();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <>
       <PageHeading
@@ -1749,6 +1804,60 @@ function CaseDetail({
           />
         }
       />
+      {!staff && item.status === "created" && (
+        <section className="panel cancel-request">
+          <div>
+            <h2>{confirmCancel ? "Отменить эту заявку?" : "Отмена заявки"}</h2>
+            <p>
+              {confirmCancel
+                ? "Заявка ещё не взята в работу. Она останется в истории со статусом «Отменена». При необходимости можно подать новую."
+                : "Пока сотрудник не начал обработку, заявку можно отменить."}
+            </p>
+          </div>
+          {confirmCancel ? (
+            <div className="cancel-request-actions">
+              <button
+                className="button secondary"
+                onClick={() => setConfirmCancel(false)}
+                disabled={busy}
+              >
+                Вернуться
+              </button>
+              <button
+                className="button cancel-confirm"
+                onClick={() => void cancel()}
+                disabled={busy}
+              >
+                {busy ? <Spinner /> : "Да, отменить заявку"}
+              </button>
+            </div>
+          ) : (
+            <button
+              className="button secondary"
+              onClick={() => setConfirmCancel(true)}
+            >
+              Отменить заявку
+            </button>
+          )}
+          {error && (
+            <div className="error" role="alert">
+              {error}
+              <button className="text-button" onClick={() => void onChange()}>
+                Обновить карточку
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+      {item.status === "cancelled" && (
+        <div className="inline-info cancelled-info">
+          <Info size={18} />
+          <span>
+            Заявка отменена. Причина и время сохранены в истории; обработка
+            остановлена.
+          </span>
+        </div>
+      )}
       {item.service === "question" && item.status === "ready" && (
         <div className="ready-banner">
           <CheckCircle2 size={25} />

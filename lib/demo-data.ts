@@ -184,7 +184,7 @@ export function lessons(userId: string): Lesson[] {
   );
 }
 export function notices(userId: string): Omit<Notice, "read">[] {
-  const date = new Date().toISOString();
+  const date = "2026-11-05T09:00:00.000Z";
   return [
     {
       id: "room-change",
@@ -204,7 +204,7 @@ export function notices(userId: string): Omit<Notice, "read">[] {
     },
     {
       id: `${userId}-welcome`,
-      title: "Справки — без очереди",
+      title: "Заказ документов в сервисном центре",
       text: "Выберите документ, проверьте данные и способ получения. Статус и готовый файл появятся здесь, в личном кабинете.",
       type: "news",
       date,
