@@ -1,0 +1,24 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "passed": 18,
+  "checks": [
+    "Anonymous room calendar denied",
+    "alina.demo login",
+    "maxim.demo login",
+    "Room day loads",
+    "Synthetic data explicitly marked",
+    "Whole day covered once without overlap",
+    "Transferred demo lesson is busy in room calendar",
+    "Calendar contains both busy periods and free windows",
+    "Other account sees same room occupancy",
+    "Other students' personal data not disclosed",
+    "Repeated lookup stays stable",
+    "Invalid calendar date rejected",
+    "Out-of-range calendar date rejected",
+    "Unknown room rejected",
+    "Non-classroom has no invented calendar",
+    "Default date is Moscow today",
+    "Current state follows clock and exclusive interval end",
+    "Future date does not claim a current state"
+  ]
+}

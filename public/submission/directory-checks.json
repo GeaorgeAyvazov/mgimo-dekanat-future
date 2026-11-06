@@ -1,0 +1,32 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "passed": 26,
+  "checks": [
+    "Anonymous directory denied",
+    "Anonymous employee profile denied",
+    "alina.demo login",
+    "maxim.demo login",
+    "office.demo login",
+    "Authenticated directory loads",
+    "No caching of authenticated responses",
+    "Professional fields without account secrets",
+    "Fictional contacts use reserved domain",
+    "Every profile explains responsibilities",
+    "Find responsible person without knowing a name",
+    "Case-insensitive name and surname search",
+    "Student vocabulary: academic leave",
+    "Student vocabulary: access",
+    "Whitespace and ё/е normalized",
+    "Search and department work together",
+    "All search words must match",
+    "Unknown query produces empty results",
+    "Other student sees same professional directory",
+    "Employee role can use directory",
+    "Employee profile deep link",
+    "Unknown employee returns 404",
+    "Invalid nested employee route returns 404",
+    "Directory appeal preserves server routing",
+    "Directory appeal persists for owner",
+    "Directory appeal remains private"
+  ]
+}

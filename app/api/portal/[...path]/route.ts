@@ -17,8 +17,12 @@ import {
   notificationList,
   cancelRequest,
 } from "@/lib/server";
+import { employees } from "@/lib/demo-employees";
 import { certificate } from "@/lib/pdf";
 import { services } from "@/lib/catalog";
+import mapCatalog from "@/public/maps/indoor.json";
+import { buildRoomCalendar, validCalendarDate } from "@/lib/room-calendar";
+import { moscowDate } from "@/lib/room-calendar-types";
 async function handle(req: Request) {
   try {
     if (req.method !== "GET") csrf(req);
@@ -30,10 +34,44 @@ async function handle(req: Request) {
     if (req.method === "POST" && path[0] === "logout") return await logout(req);
     const user = await currentUser(req);
     if (
+      path[0] === "room-calendar" &&
+      path.length === 1 &&
+      req.method === "GET"
+    ) {
+      const params = new URL(req.url).searchParams;
+      const key = params.get("room") || "";
+      const [floorKey, roomId] = key.split(":");
+      const room = mapCatalog.floors
+        .find((floor) => floor.key === floorKey)
+        ?.rooms.find(
+          (item) => item.id === roomId && ["2", "3"].includes(item.type),
+        );
+      if (!room || key !== `${floorKey}:${roomId}`)
+        throw new ApiError(404, "Календарь этой аудитории не найден");
+      const date = params.get("date") || moscowDate();
+      if (
+        !validCalendarDate(date) ||
+        Math.abs(
+          new Date(date + "T12:00:00Z").getTime() -
+            new Date(moscowDate() + "T12:00:00Z").getTime(),
+        ) >
+          90 * 86400000
+      )
+        throw new ApiError(400, "Выберите корректную дату в пределах 90 дней");
+      return json(buildRoomCalendar(key, date));
+    }
+    if (
       req.method === "GET" &&
       (path[0] === "overview" || path[0] === "session")
     )
       return json(await overview(user));
+    if (path[0] === "employees" && req.method === "GET") {
+      if (path.length === 1) return json({ employees });
+      const employee =
+        path.length === 2 && employees.find((item) => item.id === path[1]);
+      if (!employee) throw new ApiError(404, "Сотрудник не найден");
+      return json(employee);
+    }
     if (path[0] === "requests") {
       if (!path[1] && req.method === "POST")
         return await createRequest(req, user);

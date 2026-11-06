@@ -1,0 +1,548 @@
+{
+  "source_capture_date": "2026-11-06",
+  "checked_at": "2026-11-06T16:44:23.989Z",
+  "floor_count": 31,
+  "mapped_object_count": 1293,
+  "xml_valid_count": 31,
+  "checks": {
+    "all_31_expected_floors": true,
+    "all_xml_well_formed": true,
+    "no_active_or_external_svg_content": true,
+    "metadata_only_id_name_type_box": true,
+    "all_rooms_match_svg_id": true,
+    "all_boxes_finite_nonzero": true,
+    "no_contact_or_html_in_room_names": true,
+    "no_duplicate_svg_ids": true
+  },
+  "failures": [],
+  "omitted_objects": [
+    {
+      "key": "v1",
+      "id": "360p27p3",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "v3",
+      "id": "360p11p3",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g0",
+      "id": "staircase_g_c_8",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g0",
+      "id": "lift_g_c_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g1",
+      "id": "g107",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g1",
+      "id": "lift_g_1_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g2",
+      "id": "lift_g_2_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g3",
+      "id": "lift_g_3_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g5",
+      "id": "wc_g_5_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "n1",
+      "id": "staircase_n_1_6",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "n1",
+      "id": "staircase_n_1_7",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "n5",
+      "id": "staircase_n_5_4",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "d1",
+      "id": "staircase_eda_1_1",
+      "reason": "No valid captured geometry; room omitted."
+    }
+  ],
+  "sources": [
+    {
+      "key": "a1",
+      "source": "https://mgimo.ru/territory/map/?building=a&floor=1",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "309a506f50c250d956b0dfa18cd4e44a5d48bf50d4619868f06d4cf0e2461650",
+        "svg": "52e34d6b6fd06e4f6cb63e391e06aab082921956d6767d80f5ed091abb12bea1",
+        "geometry.json": "8d2a864252b5494da93f2c39d3f35e5343a0d2404d5321634c9213952687cb37",
+        "styles.json": "fc82b7ff5e0266851c1358dec43f8156af79e7120409cb408bb5da741c052828"
+      },
+      "public_svg": "/maps/floors/a1.svg",
+      "public_svg_sha256": "82ddaf75f8dd6f78399740011bdb0dbaa4d786ebd951162ebc53262c82c92342",
+      "rooms": 12
+    },
+    {
+      "key": "a2",
+      "source": "https://mgimo.ru/territory/map/?building=a&floor=2",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "3aa1fc99db235c201e287f46fb4118a73d5f3eb5b09ef8d8a11373646b0beb8c",
+        "svg": "6914a54d254577fe84a6662eb30f3605b32a4e5b379cf030cef5c51ee912dc60",
+        "geometry.json": "a640c85a2ec05a86b0643f3a3889666c29a3f7a731a5d4e678d6f51404963b26",
+        "styles.json": "ad129bb6c0c9dac6c7f8dc48a31c1d1b0e4e5df65cc8c31b574f788dd192876a"
+      },
+      "public_svg": "/maps/floors/a2.svg",
+      "public_svg_sha256": "416027c2192d5ec782b05dd163ba950344a47eb13a257ddb2ffe4530f977da26",
+      "rooms": 23
+    },
+    {
+      "key": "b0",
+      "source": "https://mgimo.ru/territory/map/?building=b&floor=0",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "7874901679038a4a62c51478f9488ecea3c2e753c246e997acb8dc138e07aa75",
+        "svg": "9aae20ff512cf7fbbac504e7313e48c8c93ca95d3e573155829691f5c367dd19",
+        "geometry.json": "ff56d5b0ca9d635725fca2b2d7b36e99918aafc1ad88feddf90c8c82a5e38626",
+        "styles.json": "2928fb6d903bff507819e915194bd015d061d7a8bafe5afdf210eeccf1f8c689"
+      },
+      "public_svg": "/maps/floors/b0.svg",
+      "public_svg_sha256": "138e09bdf4b26f5f63430a620ff895472d2167e1769277d7b87892a78f38a4fa",
+      "rooms": 47
+    },
+    {
+      "key": "b1",
+      "source": "https://mgimo.ru/territory/map/?building=b&floor=1",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "5a8af9cf705c171d138b0a5b7f2c9967af87d462a4a39ab01091d4341c307449",
+        "svg": "31e1923cded400a1d6ad723c5c9decf2b6b0bf0a76d1b7df28291d66ba527c92",
+        "geometry.json": "c2dea4a222ee83cf865524d2e794dd676a58fd4027caf008f95d11398fc74ed4",
+        "styles.json": "a84be56be1e006187169557db7c0d430d36b89515ba74dab90929f3ced862660"
+      },
+      "public_svg": "/maps/floors/b1.svg",
+      "public_svg_sha256": "196d9e49f10e29bb1830da539730a0345d480dc34802ff7729dbcbebebab9beb",
+      "rooms": 78
+    },
+    {
+      "key": "b2",
+      "source": "https://mgimo.ru/territory/map/?building=b&floor=2",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "fbd7a539b933e0273ca6ca7611ada6761e2730527eea23260e069e1605b11a54",
+        "svg": "bd3166a653fd63ba1d6128c39b5e21e1eff760bb61a0667f1bb7c699be901e37",
+        "geometry.json": "b6262075f5ef71079012f9d62e224725955a2a86b7a612a7939d5c6e6e65586d",
+        "styles.json": "475311409f700f840a3b723735f1feb074dc503cba9a58e96d1dfdad60773ea9"
+      },
+      "public_svg": "/maps/floors/b2.svg",
+      "public_svg_sha256": "0f54d5b1461b8893046e941018ea82e0b295e2469d22fd7cce5b753f66577e40",
+      "rooms": 73
+    },
+    {
+      "key": "b3",
+      "source": "https://mgimo.ru/territory/map/?building=b&floor=3",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "8c8c27e0c598e4ba0ee4499bca168ca3faadafcdf4cc5faa5e07e24e5cf8e397",
+        "svg": "7a71cebb0ff38f7cc4dc2330b6e92c6edc7070818a5b8e5b5ec06e0296ee332f",
+        "geometry.json": "9ce1d7cbd176b70342d0b20e73d3891f44bf01535c6a9b324d25f19f4e368b6e",
+        "styles.json": "d2d70d0e0f7e88b085e8015409afed610d4b1a50394c87bddd03d51e1df7b990"
+      },
+      "public_svg": "/maps/floors/b3.svg",
+      "public_svg_sha256": "614078ed50335c312342ad5be60408b37a33561085770dee2fb35f312b65a416",
+      "rooms": 75
+    },
+    {
+      "key": "b4",
+      "source": "https://mgimo.ru/territory/map/?building=b&floor=4",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "3e484b8d19d4eeab85b6ce407ba5ae242b5ccbc99202f13376c704a253d8e34b",
+        "svg": "a01edd8bfa34812f195af69e00bac1c8fd0118a1a78aa2ea9fd8c019062b5ee8",
+        "geometry.json": "ca93b496d8566a34f981c1745594fa636b2e1e5a0f54312cf2516de0cce2a16a",
+        "styles.json": "c9fbe9432341fff642bad8efa7dd6f86a315be4617f0fc92904803a4450dbbc3"
+      },
+      "public_svg": "/maps/floors/b4.svg",
+      "public_svg_sha256": "1d160324b8ed7a4a316a4c1113ef307e1102724584e3fdae62da30fe30b7a931",
+      "rooms": 72
+    },
+    {
+      "key": "v0",
+      "source": "https://mgimo.ru/territory/map/?building=v&floor=0",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "fae99a895f05fe45dec9dc35cac9a37dbfe2febac8ec1f7dad61097d62a152c6",
+        "svg": "149874787387c86c1b5a720e4283627f0dd1d91d5776029b846135fd92b5faad",
+        "geometry.json": "38ef854c88cc34ed601dacd099815a523607141d2bbdffbf0f07f99f4f90526e",
+        "styles.json": "57482cf07133f16d3b5427d2e311b620f39a57bdbd7f90b01ab80c94a1725be0"
+      },
+      "public_svg": "/maps/floors/v0.svg",
+      "public_svg_sha256": "db250f2501501314e960e2e776edf6fea83d6a1b0ae2ceb4d2928c5fc6d6c465",
+      "rooms": 4
+    },
+    {
+      "key": "v1",
+      "source": "https://mgimo.ru/territory/map/?building=v&floor=1",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "043e4fec3b7a5bc448e71c8f6f76ee6995d83a4ab14dc640600a9b2c9a64119b",
+        "svg": "b025095e829752abb18cd9069bdf7c5c9f68e980a91f35d50138c54ae5a649b9",
+        "geometry.json": "d82ee3aba92c0d9dc3d854e98c18cbeeb56011f469ac132021e3061860ee2e8f",
+        "styles.json": "2def2a647311f492645b9b74330597925d0a92b3d90de2ca8dab140c77743993"
+      },
+      "public_svg": "/maps/floors/v1.svg",
+      "public_svg_sha256": "704c509e274f17a94c55017064a08baa17a2a16433ef3486f1d8888ab05e5620",
+      "rooms": 46
+    },
+    {
+      "key": "v2",
+      "source": "https://mgimo.ru/territory/map/?building=v&floor=2",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "13604f4d0fe711b956b71ea995144f3d95a8f1e82e78dd486acdbe7fe19a73ac",
+        "svg": "d84c2d2f89d98dda96a0a9b646227e15727c1b98157e215be34429c08d93870a",
+        "geometry.json": "9779f6068ac62ed95eeac43c859e1a106d15c44d3e54ba3a299fe2900b2fe5ba",
+        "styles.json": "a49782e07f525afb43079c0342c281f2a5eb4026ab15a3fa6d8243d6e0a436cf"
+      },
+      "public_svg": "/maps/floors/v2.svg",
+      "public_svg_sha256": "f573128e130ddee507f10fd7287d600a8ae458443c456901b73cd895e17c9219",
+      "rooms": 74
+    },
+    {
+      "key": "v3",
+      "source": "https://mgimo.ru/territory/map/?building=v&floor=3",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "b36b92d2d52417573902c9567e751f887622a2212fe835afb5066f83b1c451d2",
+        "svg": "18c3a9162391d639f8e7aff41b4b327d4fceb2d1357ffd6ab998f35be6fa27f0",
+        "geometry.json": "7bbb5bc57b63bc8b9634fb14df8923ff41d2b9f39ac55582d90cabae9889fb30",
+        "styles.json": "39c1edf96f99450cd058c6746f60c61374118654c411611d0aa3832551084aef"
+      },
+      "public_svg": "/maps/floors/v3.svg",
+      "public_svg_sha256": "4e95383989725999f6fc7fc058e085c204e28e39df481885fc43e68ef683af66",
+      "rooms": 55
+    },
+    {
+      "key": "v4",
+      "source": "https://mgimo.ru/territory/map/?building=v&floor=4",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "fb1dc77c96b1b0fc1e55e9609c5b706e61b36479a90fc2820e9efbaa4842880a",
+        "svg": "35cf47c29a0b21ab90807343dd88527a0c1aaae8b520e3bd3d756f8b48895a0b",
+        "geometry.json": "9d33ce8eee9dab2a2531f50d67c8cdcda2cd0cac4489115dd851464e9574d5b0",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/v4.svg",
+      "public_svg_sha256": "ea88393505cc8bea009d5fb2cbd469f4d8ff1f184d544e5ec5d72fc622dc53c7",
+      "rooms": 44
+    },
+    {
+      "key": "g0",
+      "source": "https://mgimo.ru/territory/map/?building=g&floor=0",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "8e09cb8eed7db20b98121b30e336f11ea0f70c42c4516d6f5db4ac2f1cb985be",
+        "svg": "4e6cdcf4b4292007c08756441d2fd0c7340bb1f752c2b88cfe82325a7ea2beef",
+        "geometry.json": "6c77cdd8ed28709dbcc88bab3604545b6fd734b8a7e4b2ae4a77a0887e06c6fc",
+        "styles.json": "542865445e5aa7d0e55a91ccb1ef8583d8e36b372278de3e127cb13f473c5256"
+      },
+      "public_svg": "/maps/floors/g0.svg",
+      "public_svg_sha256": "1642a8d207cec90383a0708e3edf5dbe12a0b194bd345502ef0a6288f48e576e",
+      "rooms": 68
+    },
+    {
+      "key": "g1",
+      "source": "https://mgimo.ru/territory/map/?building=g&floor=1",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "ba5f0f1ead0a8b3e8fba7621cad8b917277a6fe6e1b31f2bf5015db8760bb009",
+        "svg": "110b6d3f02627a9cbd463c2dee9c19e3bf965b9df495f7cda5665904a5ab09d2",
+        "geometry.json": "ca4dc4b1479b25ba957dc3fe41145acc64d7454e28c4a278ba98951df6123719",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/g1.svg",
+      "public_svg_sha256": "451fd239c597f4ef7ff3ca872cd3b916e46aa7b655607e1580542a101f70c093",
+      "rooms": 73
+    },
+    {
+      "key": "g2",
+      "source": "https://mgimo.ru/territory/map/?building=g&floor=2",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "59474441de9d8894073d24e920eb38b8cbd8d841142d6e1a1b47fdbac3ba0b44",
+        "svg": "fd691cd80bdc62db9996c25335672b7ad0ac529dbb4bc2523d6fe7729e626f27",
+        "geometry.json": "5ebfd2bd5c1af687e6bfab88178f7a331aab3cbbdb69eeb96fa8bf39800e78df",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/g2.svg",
+      "public_svg_sha256": "1e0f78a0a8ec916a9cfdc4a398aef83ee996794ba24f4f400b86016a091682dc",
+      "rooms": 79
+    },
+    {
+      "key": "g3",
+      "source": "https://mgimo.ru/territory/map/?building=g&floor=3",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "6f879af9edefcb7a74b742c064230741a574cc53021a2fa1dbcfeb80840eb488",
+        "svg": "1330dbd79df3027850e0423e955bb274d69778e94c9527f3a3c71f6ac51d855f",
+        "geometry.json": "d4f012b705d856aad9179e0f03f42c4bc825794331a6a34aca99c6d9d1a0b0b4",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/g3.svg",
+      "public_svg_sha256": "e578b2b82ad24b74987ba71582b1b38da6c358e03fb6df599c7c71a47f4346c2",
+      "rooms": 77
+    },
+    {
+      "key": "g4",
+      "source": "https://mgimo.ru/territory/map/?building=g&floor=4",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "b491ac12f36ea9cc4447b156cef3d396df551ca99e7dfdbded1219fead4cecce",
+        "svg": "5023a60181baf19b8d80d12118b766a9cfca50d3ce4441ed0b43e730f3b078f5",
+        "geometry.json": "24f0caf44486227980e069a77ceef6ae73ce08656f27d36567b3051587c852b2",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/g4.svg",
+      "public_svg_sha256": "13a64e133b346f77348653b38bc79958cdde5b036308a7e2b73ad843dc7c7ba6",
+      "rooms": 75
+    },
+    {
+      "key": "g5",
+      "source": "https://mgimo.ru/territory/map/?building=g&floor=5",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "ce157f4876bcd8b1c610f210b2b3d60af464557ff69d4c625899bc5bd793236c",
+        "svg": "1d5d8c228dc61c75e1618d54394957fadeba09cddecb7d8ad6cbc7f13ccac2c3",
+        "geometry.json": "b350930044302161f692b813da4bdec116d0470bc0ba9be2983695239382ef2b",
+        "styles.json": "f62a659a50637c7512a62aa44d009498a40f67b54f0d338ef111d2056b2fb06d"
+      },
+      "public_svg": "/maps/floors/g5.svg",
+      "public_svg_sha256": "6406049d83eafcb9e0ba39fb4852b16c3d19294be0fc14b33adc35ec9d7f925d",
+      "rooms": 11
+    },
+    {
+      "key": "g6",
+      "source": "https://mgimo.ru/territory/map/?building=g&floor=6",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "f3f878794556416a86735ceef8927141ee00f7719da8af781641c013aeb185b5",
+        "svg": "d98216594bb4495daf3f710fb7544b6a5fce348fd1159d3f796669c64e81ab01",
+        "geometry.json": "af358856146b7e6d69399fb1ef6419ffa926ff61faa0d0fa4475d68de4d58df3",
+        "styles.json": "24ac7c550f0c79cfef7c7b885adbc89baa7b1eb71f22f58ec1659a045dd157b2"
+      },
+      "public_svg": "/maps/floors/g6.svg",
+      "public_svg_sha256": "3cbab2fea673c56e0fc174592caf703cd85abf655d50b3c06acb4cc963ba8013",
+      "rooms": 3
+    },
+    {
+      "key": "n1",
+      "source": "https://mgimo.ru/territory/map/?building=n&floor=1",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "3823b3f3fc0300e4e26976139f6a8894f684dfe09c7095c88e398e6fd756d1d8",
+        "svg": "a1b9ee903ba8d24d2a90db32a2489d8a3889a25b9d444fcf0dd35d509ebc7e7b",
+        "geometry.json": "83e46fbb19d500762dafad779eba82c971f712dd9b0cda34074e3484f25047b6",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/n1.svg",
+      "public_svg_sha256": "f673f85b24e828f17d9b5153c79416730e5410472e8d854c9e91bec9437c0162",
+      "rooms": 54
+    },
+    {
+      "key": "n2",
+      "source": "https://mgimo.ru/territory/map/?building=n&floor=2",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "977f453ade566ce778935d2cb77c934dab2b4dc3cd471e12731c508d6a6b37c9",
+        "svg": "771d86158b37fd51fe12789d2ca6fdd8aa8af6b2f0361a43cf6d44607fc4fe9f",
+        "geometry.json": "426b6779dffed26ff189b015af1720e894dedd7baafda7b8a5ec1d69e4c2cb02",
+        "styles.json": "878419dd159712d28ce3139839fb62e817d9ba6132a8563aaca9a68021e40494"
+      },
+      "public_svg": "/maps/floors/n2.svg",
+      "public_svg_sha256": "1cfb7b5a2489aefae6d4bff05db30c73e8961e408c1091cb49ec64a3472c6b5a",
+      "rooms": 54
+    },
+    {
+      "key": "n3",
+      "source": "https://mgimo.ru/territory/map/?building=n&floor=3",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "b1384295ff37baf48b72b72d2cf668472eff43b159f3be82af4b49f1a6f0150b",
+        "svg": "af772d7b75814d7f51d03c6c55c92192a11c4e032e9cc0a977c199fb9f1b1177",
+        "geometry.json": "1db2bebe0586c1093713ed6d88ffafb8d6d94f9d17ac384e0bb8b61687225b75",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/n3.svg",
+      "public_svg_sha256": "12b726dc8d745e26c2532ab2ad41eacf4eb99dd397a510447b24e106e1346a88",
+      "rooms": 49
+    },
+    {
+      "key": "n4",
+      "source": "https://mgimo.ru/territory/map/?building=n&floor=4",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "d784c9819968a7910982ae2c9d64a48c83f576f880b501841046ac6f3e133b50",
+        "svg": "70a728f402e96ae4235f4c7f33e267b9cb4982b675498d43131b330cb6ffd424",
+        "geometry.json": "3b9fcf3f427770ae2f9fd429400721290e4c0bd280695cfe2e8e1cad95cbd8e3",
+        "styles.json": "35f6a2d7f734fe1062f873339c5e5579c5c130b5690aff0785b9e9df36b533bc"
+      },
+      "public_svg": "/maps/floors/n4.svg",
+      "public_svg_sha256": "3d7dea64625724fbc8fd59bd2dd9a1b3a975ce19bde6ddec5241fcc31f38ddae",
+      "rooms": 53
+    },
+    {
+      "key": "n5",
+      "source": "https://mgimo.ru/territory/map/?building=n&floor=5",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "0f7e863e11281886f0605860cdde9ae0c1af778e5880f2f9a9eee004ff7fe2e5",
+        "svg": "a021f909d6baa76e5ef7fc3a14c37d22baf760c1baa4573f57317b86dd835a62",
+        "geometry.json": "3480a470d26dfa16c2fb2150eb768886685e9e0ce7526a641abbed5c543f6d78",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/n5.svg",
+      "public_svg_sha256": "a9800664541be4244e79cb02aab5b0159c45f41375de179a068de1d244a86711",
+      "rooms": 50
+    },
+    {
+      "key": "l0",
+      "source": "https://mgimo.ru/territory/map/?building=l&floor=0",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "6f3b84f8474b523715068159fc3df5331da639dfe011f6dd4f6171ea2090792a",
+        "svg": "acf3753ab854bbe0decbe3444ad0fc7531f2b60435e64d985aa1f7882d1fc324",
+        "geometry.json": "394e2aac0820733f1f9f77c5e17860b9780aa5490c46d75ffaffab6b9814bcfa",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/l0.svg",
+      "public_svg_sha256": "469d6e6b2eb07bcfbb68ce6efc44f58097743ae0daf284460093d8fba8b9c70c",
+      "rooms": 1
+    },
+    {
+      "key": "l1",
+      "source": "https://mgimo.ru/territory/map/?building=l&floor=1",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "bf4fae9010e649f09bcc48ee0cc62c4d1818284677f13ad7b02a7d4c2442e8c3",
+        "svg": "f9bdceef3ad6b476dd748b12b577f3497ef610463a06088ce4a2fe4348a541ca",
+        "geometry.json": "6375e7c2b22db0273d11c69a00f2f1d993494a183e0b5e2ad1a8a26641fafe77",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/l1.svg",
+      "public_svg_sha256": "f942eb3c6125c6aa65510cf4189ed4a4fe327e5282e9343778f9c110ad8fba3c",
+      "rooms": 14
+    },
+    {
+      "key": "l2",
+      "source": "https://mgimo.ru/territory/map/?building=l&floor=2",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "47ed6b8cd694167a40afb767d2d69a1fe11aa150e1dd22798e497811ace32e5d",
+        "svg": "674752f682fcb379488ca7260688dbaf4499c31a6680c159aa06707d9b08f7d8",
+        "geometry.json": "d6e88b482d38f3e40ab26c9eb38c65a32e472812a31445e25dbc0806e71b232e",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/l2.svg",
+      "public_svg_sha256": "63bf0a53156bd8c27b6e14f50e8fce11cb558f3bcec7627f523f4df9984f8e0f",
+      "rooms": 9
+    },
+    {
+      "key": "l3",
+      "source": "https://mgimo.ru/territory/map/?building=l&floor=3",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "5459defcf45949242ad336c848746d547cf0c09df4ec496dd037f9f486765a8f",
+        "svg": "80a50d56e1c945bb1283a8312dcf7656c8d9eae4b3d9b9b482db9abc9b5ee538",
+        "geometry.json": "7645b4944f611fc5c911bdea6568538126ddfabba1ca3449feaea1626b3ee17a",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/l3.svg",
+      "public_svg_sha256": "14df6bb02814ca8c6b6653dddb36c53f862898a4b17b16d17f4231f3ee3ed85b",
+      "rooms": 4
+    },
+    {
+      "key": "d1",
+      "source": "https://mgimo.ru/territory/map/?building=d&floor=1",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "2b37cd3e1667fe72d341339e9e840cf6b3b2b9028fc6d2b8c2bc1005efa53c64",
+        "svg": "d06472058b42bb0cefd132a174992cd2dad58a456ff74fd4e5b9891cfb35f365",
+        "geometry.json": "1ad0ec51e6d630506bc8f5c883b15959a476bb0a22fa51a102f13d221b9b2cf1",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/d1.svg",
+      "public_svg_sha256": "7949b97d13f1347f18cdacfbc01cb9acd0d3313914c04ca2c368e76a7c82f326",
+      "rooms": 6
+    },
+    {
+      "key": "d2",
+      "source": "https://mgimo.ru/territory/map/?building=d&floor=2",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "990a27cb36294cd545fb0ee0a814edd467aed1f697d81791f88cc792e162ce49",
+        "svg": "791cbf326344f24ce7c31b15e13e92b5471d93ec5182700aa0bcaa906ed2d7b9",
+        "geometry.json": "f7f9884562a937cf1950ce2d815c1aa292237387cd2a4c3d698f8c124d443b1e",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/d2.svg",
+      "public_svg_sha256": "5c121445b82a0c66d7a3f5d0c326238101a7a0546a26fa2329eec4c4dc40aaa8",
+      "rooms": 5
+    },
+    {
+      "key": "d3",
+      "source": "https://mgimo.ru/territory/map/?building=d&floor=3",
+      "source_capture_date": "2026-11-06",
+      "input_sha256": {
+        "scripts.html": "52a38cc3ece544922ce93f78d077e959c2fd62cd39660bf87e16d0ac05331d08",
+        "svg": "c08573d8c80620b390d27d122b890a964da5ffd46224a9e3f4697b4f05f3aaaa",
+        "geometry.json": "f2c8e5310ed9fe3577a03baf439aa3d9bf86ea6b21b8e033789d87ec6ae869e5",
+        "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "public_svg": "/maps/floors/d3.svg",
+      "public_svg_sha256": "91b674ad7259bc88990fc833106d10e7989fcda05f771b6b37200f95660a305b",
+      "rooms": 5
+    }
+  ],
+  "decorative_id_duplicates_removed": [
+    {
+      "key": "a2",
+      "id": "rect3904",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "a2",
+      "id": "rect3906",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "a2",
+      "id": "rect3344",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "a2",
+      "id": "rect5484",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "a2",
+      "id": "rect3209",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    }
+  ]
+}

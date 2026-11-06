@@ -1249,14 +1249,11 @@ code {
   border-radius: 3px;
   align-self: stretch;
 }
-.lesson:nth-of-type(3) .lesson-line {
-  background: #dacff2;
+.lesson-lecture .lesson-line {
+  background: #85aef0;
 }
-.lesson:nth-of-type(4) .lesson-line {
-  background: #bce0d0;
-}
-.lesson-changed .lesson-line {
-  background: #f0cf9c !important;
+.lesson-seminar .lesson-line {
+  background: #8fcbb6;
 }
 .lesson-main {
   flex: 1;
@@ -4000,4 +3997,29 @@ code {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+.schedule-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0 0 22px;
+}
+.schedule-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.schedule-legend i {
+  width: 7px;
+  height: 14px;
+  border-radius: 3px;
+}
+.lecture-dot {
+  background: #85aef0;
+}
+.seminar-dot {
+  background: #8fcbb6;
 }

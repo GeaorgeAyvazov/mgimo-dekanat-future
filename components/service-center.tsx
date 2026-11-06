@@ -2,6 +2,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import {
   Search,
+  UsersRound,
   Star,
   ArrowRight,
   ArrowUpRight,
@@ -111,7 +112,7 @@ export function ServiceCenter({
     <>
       <div className="center-heading">
         <div>
-          <span className="eyebrow">МГИМО · ДЛЯ СТУДЕНТОВ ФИЛИАЛА</span>
+          <span className="eyebrow">МГИМО · МОСКВА</span>
           <h1>Центр сервиса «Студент»</h1>
           <p>Заказ документов, заявки и обращения студентов.</p>
         </div>
@@ -160,6 +161,14 @@ export function ServiceCenter({
           <ArrowUpRight size={17} />
         </button>
       </div>
+      <button className="employee-entry" onClick={() => go("employees")}>
+        <UsersRound size={24} />
+        <span>
+          <strong>Сотрудники</strong>
+          <small>Кто отвечает за ваш вопрос · контакты и часы приёма</small>
+        </span>
+        <ChevronRight size={18} />
+      </button>
       <section className="center-catalog">
         <div className="center-section-heading">
           <h2>Услуги и документы</h2>
@@ -389,7 +398,7 @@ export function ServiceCenter({
       </div>
       <p className="page-note">
         <MapPin size={15} />
-        Единое окно для филиала. Подразделения, точки выдачи и сведения в демо
+        Единое окно для студентов. Подразделения, точки выдачи и сведения в демо
         вымышлены.
       </p>
     </>
@@ -479,15 +488,21 @@ export function DocumentWallet({
   );
 }
 export function AppealForm({
+  initialTopic = "documents",
   user,
   back,
   create,
 }: {
+  initialTopic?: string;
   user: Student;
   back: () => void;
   create: (payload: Record<string, unknown>) => Promise<void>;
 }) {
-  const [topic, setTopic] = useState("documents"),
+  const [topic, setTopic] = useState(
+      topics.some((item) => item.id === initialTopic)
+        ? initialTopic
+        : "documents",
+    ),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const key = useRef(crypto.randomUUID());

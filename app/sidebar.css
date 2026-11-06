@@ -1,0 +1,132 @@
+/* Reference: the supplied HSE recording, 06.11.2026.
+   The rail expands over the page; the content offset stays constant. */
+@media (min-width: 701px) {
+  .reveal-sidebar {
+    width: 80px;
+    padding: 20px 12px 14px;
+    overflow-x: clip;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    transition:
+      width 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 240ms ease;
+  }
+  .reveal-sidebar[data-expanded="true"] {
+    width: 264px;
+    box-shadow: 10px 0 24px -16px #20314d40;
+  }
+  .app-shell > .workspace {
+    margin-left: 80px;
+  }
+  .reveal-sidebar .logo-button {
+    width: 240px;
+    min-height: 48px;
+    margin: 0 0 20px;
+    padding: 0 10px;
+  }
+  .reveal-sidebar .brand {
+    width: 220px;
+    gap: 13px;
+    font-size: 26px;
+    white-space: nowrap;
+  }
+  .reveal-sidebar .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+  .reveal-sidebar .brand > span:last-child,
+  .reveal-sidebar .sidebar-label {
+    opacity: 0;
+    transform: translateX(-5px);
+    transition:
+      opacity 100ms ease,
+      transform 180ms ease;
+    pointer-events: none;
+  }
+  .reveal-sidebar[data-expanded="true"] .brand > span:last-child,
+  .reveal-sidebar[data-expanded="true"] .sidebar-label {
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 65ms;
+  }
+  .reveal-sidebar .campus {
+    width: 240px;
+    min-height: 60px;
+    padding: 12px 17px;
+    margin: 0 0 16px;
+    gap: 17px;
+  }
+  .reveal-sidebar nav {
+    width: 240px;
+    gap: 5px;
+  }
+  .reveal-sidebar .nav-item {
+    width: 240px;
+    min-height: 48px;
+    padding: 12px 16px;
+    gap: 18px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .reveal-sidebar .nav-item > svg {
+    width: 22px;
+    height: 22px;
+  }
+  .reveal-sidebar .nav-item.active {
+    background: var(--blue-light);
+  }
+  .reveal-sidebar .nav-item.active::before {
+    left: -12px;
+  }
+  .reveal-sidebar .nav-count {
+    margin-left: auto;
+  }
+  .reveal-sidebar[data-expanded="false"] .nav-item,
+  .reveal-sidebar[data-expanded="false"] .logo-button,
+  .reveal-sidebar[data-expanded="false"] .sidebar-profile {
+    width: 56px;
+  }
+  .reveal-sidebar .sidebar-bottom {
+    width: 240px;
+    padding-top: 24px;
+  }
+  .reveal-sidebar .sidebar-demo {
+    width: 240px;
+    padding: 10px 18px;
+    margin: 8px 0;
+    gap: 18px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .reveal-sidebar .sidebar-profile {
+    width: 240px;
+    padding: 16px 10px 0;
+    gap: 13px;
+  }
+  .reveal-sidebar .sidebar-profile .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+  .reveal-sidebar .sidebar-profile > span:nth-child(2) {
+    flex: 1;
+  }
+  .reveal-sidebar .sidebar-profile strong {
+    font-size: 11px;
+  }
+  .reveal-sidebar .sidebar-profile small {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .toast {
+    left: calc(50% + 40px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-sidebar,
+  .reveal-sidebar .sidebar-label,
+  .reveal-sidebar .brand > span:last-child {
+    transition: none;
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "source": "https://mgimo.ru/territory/",
+  "retrieved": "2026-11-06",
+  "element": "svg#legend_map",
+  "original_sha256": "6a96c9a6e3f69c5169675ae1fadebaeaa8acd5135df8b5c89a5e8f70cea380d7",
+  "sanitized_sha256": "e288c1faf7ba6e271fe0312a071878d079f8aa2cde9625fca5fbcf56da41b30f",
+  "changes": "Removed scripts, event handlers and external href/src attributes. Rendered as an image. Public noncommercial educational prototype; attribution displayed beside the map. Applied neutral grey building fills formerly supplied by the source website CSS."
+}

@@ -145,6 +145,7 @@ export type Lesson = {
   subject: string;
   kind: string;
   room: string;
+  roomId?: string;
   teacher: string;
   change?: string;
   oldRoom?: string;

@@ -167,6 +167,37 @@ export function lessons(userId: string): Lesson[] {
     [0, 1, 2].map((slot) => {
       const n = (day + slot) % 5,
         changed = day === 4 && slot === 1;
+      // Real room IDs from the public Moscow campus map. Lessons and students
+      // are fictional. Keeping the explicit floor key avoids guessing an ID.
+      const rooms = a
+        ? [
+            "2009",
+            "2010",
+            "2011",
+            "2016",
+            "2017",
+            "2039",
+            "2040",
+            "2041",
+            "2042",
+            "2043",
+            "2045",
+          ]
+        : [
+            "3018",
+            "3019",
+            "3041",
+            "3042",
+            "3043",
+            "3045",
+            "3046",
+            "3047",
+            "3048",
+            "3051",
+          ];
+      const originalRoom = rooms[(day * 3 + slot) % rooms.length];
+      const actualRoom = changed ? (a ? "3018" : "2009") : originalRoom;
+      const actualFloor = changed ? (a ? "b3" : "b2") : a ? "b2" : "b3";
       return {
         id: `${userId}-${day}-${slot}`,
         day,
@@ -175,9 +206,10 @@ export function lessons(userId: string): Lesson[] {
         subject: titles[n],
         teacher: teachers[n],
         kind: slot === 0 ? "Лекция" : "Семинар",
-        room: changed ? "А-305" : `${a ? "А" : "Б"}-${201 + day * 10 + slot}`,
+        room: actualRoom,
+        roomId: `${actualFloor}:${actualRoom}`,
         ...(changed
-          ? { change: "Изменилась аудитория", oldRoom: "А-214" }
+          ? { change: "Изменилась аудитория", oldRoom: originalRoom }
           : {}),
       };
     }),
@@ -189,7 +221,7 @@ export function notices(userId: string): Omit<Notice, "read">[] {
     {
       id: "room-change",
       title: "Новая аудитория в пятницу",
-      text: "Вторая пара пройдёт в А-305 вместо А-214. В расписании уже указана новая аудитория.",
+      text: `Вторая пара пройдёт в ${userId === "student-alina" ? "3018 вместо 2011" : "2009 вместо 3042"}. В расписании уже указана новая аудитория.`,
       type: "schedule",
       date,
       link: "schedule",

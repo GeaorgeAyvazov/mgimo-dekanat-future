@@ -1,0 +1,20 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "passed": 14,
+  "checks": [
+    "Local map catalog served as JSON",
+    "31 actual Moscow floor plans available",
+    "No missing source plans",
+    "Exact classroom search ranks correct real room first",
+    "Unknown classroom returns empty results",
+    "Search by place name works",
+    "Opening classroom puts it inside the visible map",
+    "Dragging and zoom cannot leave map bounds",
+    "Reset fits the whole floor",
+    "Every referenced floor SVG is served without HTML fallback",
+    "maxim.demo can load schedule",
+    "maxim.demo lessons all link to genuine labeled rooms",
+    "alina.demo can load schedule",
+    "alina.demo lessons all link to genuine labeled rooms"
+  ]
+}

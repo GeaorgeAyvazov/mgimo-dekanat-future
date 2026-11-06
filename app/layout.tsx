@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./service-center.css";
+import "./sidebar.css";
+import "./employees.css";
+import "./campus-map.css";
 
 export const metadata: Metadata = {
   title: "Студент — центр сервиса МГИМО",

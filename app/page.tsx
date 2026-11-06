@@ -1,4 +1,7 @@
 "use client";
+import { CampusMap } from "@/components/campus-map";
+import { PortalSidebar } from "@/components/portal-sidebar";
+import { EmployeeDirectory } from "@/components/employee-directory";
 import {
   ServiceCenter,
   DocumentWallet,
@@ -13,6 +16,7 @@ import {
 } from "react";
 import {
   FolderOpen,
+  UsersRound,
   ArrowUpRight,
   ArrowRight,
   ArrowLeft,
@@ -78,7 +82,8 @@ type View =
   | "case"
   | "order"
   | "staff"
-  | "wallet";
+  | "wallet"
+  | "employees";
 const navigation = [
   {
     id: "today",
@@ -100,6 +105,7 @@ const navigation = [
     short: "Документы",
     icon: FolderOpen,
   },
+  { id: "employees", label: "Сотрудники", icon: UsersRound },
   { id: "profile", label: "Мой профиль", short: "Профиль", icon: UserRound },
 ];
 const titles: Record<string, string> = {
@@ -108,6 +114,7 @@ const titles: Record<string, string> = {
   grades: "Успеваемость",
   services: "Мои обращения",
   wallet: "Мои документы",
+  employees: "Сотрудники",
   profile: "Мой профиль",
   notifications: "Уведомления",
   case: "Моя заявка",
@@ -306,8 +313,9 @@ function Login({ onLogin }: { onLogin: () => Promise<void> }) {
             </div>
           </details>
           <p className="login-note">
-            <ShieldCheck size={16} />В прототипе используются только вымышленные
-            данные. Это самостоятельный учебный проект.
+            <ShieldCheck size={16} />
+            Данные учебных записей вымышлены. Это самостоятельный учебный
+            проект.
           </p>
         </div>
       </section>
@@ -329,7 +337,10 @@ export default function Portal() {
     [caseError, setCaseError] = useState(""),
     [caseLoading, setCaseLoading] = useState(false),
     [caseTick, setCaseTick] = useState(0),
-    [requestFilter, setRequestFilter] = useState("all");
+    [requestFilter, setRequestFilter] = useState("all"),
+    [mapRoom, setMapRoom] = useState<{ label: string; id?: string } | null>(
+      null,
+    );
   const mainRef = useRef<HTMLElement>(null);
   async function refresh() {
     try {
@@ -529,11 +540,12 @@ export default function Portal() {
   const nav = staff
     ? [
         { id: "staff", label: "Обращения", icon: Inbox },
+        { id: "employees", label: "Сотрудники", icon: UsersRound },
         { id: "profile", label: "Мой профиль", icon: UserRound },
       ]
     : navigation;
   const activeDay = selectedDay < 0 ? dayIndex : selectedDay;
-  const selectedService = services.find((s) => s.id === entity);
+  const selectedService = services.find((s) => s.id === entity.split("?")[0]);
   const weekStart = new Date(today + "T12:00:00Z");
   weekStart.setUTCDate(weekStart.getUTCDate() - dayIndex + week * 7);
   const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -579,7 +591,10 @@ export default function Portal() {
   }
   function lessonCard(l: Lesson, i: number) {
     return (
-      <div key={l.id} className={`lesson ${l.change ? "lesson-changed" : ""}`}>
+      <div
+        key={l.id}
+        className={`lesson lesson-${l.kind === "Лекция" ? "lecture" : "seminar"} ${l.change ? "lesson-changed" : ""}`}
+      >
         <div className="lesson-time">
           <strong>{l.start}</strong>
           <span>{l.end}</span>
@@ -604,82 +619,44 @@ export default function Portal() {
             </div>
           )}
         </div>
-        <span className="room">
+        <button
+          className="room"
+          onClick={() => setMapRoom({ label: l.room, id: l.roomId })}
+          aria-label={`Открыть карту МГИМО, аудитория ${l.room}`}
+          title="Показать карту кампуса"
+        >
           <MapPin size={14} />
           {l.room}
-        </span>
+        </button>
       </div>
     );
   }
   const currentNav = view === "case" || view === "order" ? "services" : view;
   return (
     <div className="app-shell">
+      {mapRoom && (
+        <CampusMap
+          room={mapRoom.label}
+          roomId={mapRoom.id}
+          close={() => setMapRoom(null)}
+        />
+      )}
       <a className="skip-link" href="#main-content">
         Перейти к содержимому
       </a>
-      <aside className="sidebar">
-        <button
-          className="logo-button"
-          onClick={() => go(staff ? "staff" : "today")}
-          aria-label="На главную"
-        >
-          <Logo />
-        </button>
-        <div className="campus">
-          <Building2 size={16} />
-          <span>
-            МГИМО<small>Деканат будущего</small>
-          </span>
-          <span className="campus-tag">DEMO</span>
-        </div>
-        <nav aria-label="Основная навигация">
-          {nav.map((n) => (
-            <button
-              key={n.id}
-              className={`nav-item ${currentNav === n.id ? "active" : ""}`}
-              onClick={() => go(n.id as View)}
-              aria-current={currentNav === n.id ? "page" : undefined}
-            >
-              <n.icon size={21} />
-              <span>{n.label}</span>
-              {n.id === "services" && activeRequests.length > 0 && (
-                <b className="nav-count">{activeRequests.length}</b>
-              )}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="help-card">
-            <MessageCircle size={22} />
-            <strong>Есть вопрос по заявке?</strong>
-            <p>Ответ сотрудника и уточнения — прямо в её карточке.</p>
-            <button
-              onClick={() => {
-                go(staff ? "staff" : "services");
-              }}
-            >
-              Мои обращения <ArrowUpRight size={15} />
-            </button>
-          </div>
-          <span className="sidebar-demo">
-            <ShieldCheck size={15} />
-            Учебный прототип
-          </span>
-          <button className="sidebar-profile" onClick={() => go("profile")}>
-            <span className="avatar">{initials}</span>
-            <span>
-              <strong>
-                {firstName} {user.name.split(" ")[2]}
-              </strong>
-              <small>
-                {user.student_group}
-                {!staff && ` · ${user.course} курс`}
-              </small>
-            </span>
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </aside>
+      <PortalSidebar
+        items={nav}
+        current={currentNav}
+        activeRequests={activeRequests.length}
+        logo={<Logo />}
+        name={firstName + " " + user.name.split(" ")[2]}
+        group={
+          user.student_group + (!staff ? " · " + user.course + " курс" : "")
+        }
+        initials={initials}
+        home={staff ? "staff" : "today"}
+        navigate={(v) => go(v as View)}
+      />
       <div className="workspace">
         <header className="topbar">
           <div className="mobile-brand">
@@ -791,6 +768,14 @@ export default function Portal() {
               }}
             />
           )}
+          {view === "employees" && (
+            <EmployeeDirectory
+              key={user.id}
+              selected={entity}
+              go={(v, id) => go(v as View, id)}
+              canAsk={!staff}
+            />
+          )}
           {view === "wallet" && !staff && (
             <DocumentWallet
               requests={requests}
@@ -864,11 +849,14 @@ export default function Portal() {
                   </button>
                 ))}
               </div>
-              <div className="inline-info">
-                <RefreshCw size={17} />
+              <div className="schedule-legend" aria-label="Обозначения занятий">
                 <span>
-                  В пятницу изменена аудитория второй пары: <s>А-214</s> →{" "}
-                  <b>А-305</b>.
+                  <i className="lecture-dot" />
+                  Лекция
+                </span>
+                <span>
+                  <i className="seminar-dot" />
+                  Семинар
                 </span>
               </div>
               {scheduleMode === "day" ? (
@@ -1142,6 +1130,12 @@ export default function Portal() {
             (selectedService ? (
               selectedService.id === "question" ? (
                 <AppealForm
+                  key={entity}
+                  initialTopic={
+                    new URLSearchParams(entity.split("?")[1] || "").get(
+                      "topic",
+                    ) || "documents"
+                  }
                   user={user}
                   back={() => go("today")}
                   create={async (payload) => {
@@ -1382,9 +1376,14 @@ export default function Portal() {
             </>
           )}
           {staff &&
-            !["staff", "services", "profile", "notifications", "case"].includes(
-              view,
-            ) && (
+            ![
+              "staff",
+              "services",
+              "profile",
+              "notifications",
+              "case",
+              "employees",
+            ].includes(view) && (
               <Empty
                 title="Кабинет сотрудника"
                 text="Перейдите к обращениям, чтобы обработать заявки студентов."
@@ -1396,13 +1395,13 @@ export default function Portal() {
             )}
           <footer className="page-footer">
             <span>Деканат будущего</span>
-            <span>Учебный прототип · Все данные вымышлены</span>
+            <span>Учебный прототип · Данные студентов вымышлены</span>
           </footer>
         </main>
       </div>
       <nav className="mobile-nav" aria-label="Мобильная навигация">
         {nav
-          .filter((n) => n.id !== "wallet")
+          .filter((n) => n.id !== "wallet" && n.id !== "employees")
           .map((n) => (
             <button
               key={n.id}

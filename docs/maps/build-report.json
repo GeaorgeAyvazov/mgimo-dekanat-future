@@ -1,0 +1,222 @@
+{
+  "source_capture_date": "2026-11-06",
+  "built": [
+    {
+      "key": "a1",
+      "rooms": 12
+    },
+    {
+      "key": "a2",
+      "rooms": 23
+    },
+    {
+      "key": "b0",
+      "rooms": 47
+    },
+    {
+      "key": "b1",
+      "rooms": 78
+    },
+    {
+      "key": "b2",
+      "rooms": 73
+    },
+    {
+      "key": "b3",
+      "rooms": 75
+    },
+    {
+      "key": "b4",
+      "rooms": 72
+    },
+    {
+      "key": "v0",
+      "rooms": 4
+    },
+    {
+      "key": "v1",
+      "rooms": 46
+    },
+    {
+      "key": "v2",
+      "rooms": 74
+    },
+    {
+      "key": "v3",
+      "rooms": 55
+    },
+    {
+      "key": "v4",
+      "rooms": 44
+    },
+    {
+      "key": "g0",
+      "rooms": 68
+    },
+    {
+      "key": "g1",
+      "rooms": 73
+    },
+    {
+      "key": "g2",
+      "rooms": 79
+    },
+    {
+      "key": "g3",
+      "rooms": 77
+    },
+    {
+      "key": "g4",
+      "rooms": 75
+    },
+    {
+      "key": "g5",
+      "rooms": 11
+    },
+    {
+      "key": "g6",
+      "rooms": 3
+    },
+    {
+      "key": "n1",
+      "rooms": 54
+    },
+    {
+      "key": "n2",
+      "rooms": 54
+    },
+    {
+      "key": "n3",
+      "rooms": 49
+    },
+    {
+      "key": "n4",
+      "rooms": 53
+    },
+    {
+      "key": "n5",
+      "rooms": 50
+    },
+    {
+      "key": "l0",
+      "rooms": 1
+    },
+    {
+      "key": "l1",
+      "rooms": 14
+    },
+    {
+      "key": "l2",
+      "rooms": 9
+    },
+    {
+      "key": "l3",
+      "rooms": 4
+    },
+    {
+      "key": "d1",
+      "rooms": 6
+    },
+    {
+      "key": "d2",
+      "rooms": 5
+    },
+    {
+      "key": "d3",
+      "rooms": 5
+    }
+  ],
+  "missing": [],
+  "warnings": [
+    {
+      "key": "a2",
+      "id": "rect3904",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "a2",
+      "id": "rect3906",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "a2",
+      "id": "rect3344",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "a2",
+      "id": "rect5484",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "a2",
+      "id": "rect3209",
+      "reason": "Duplicate decorative SVG id removed from later node; geometry preserved."
+    },
+    {
+      "key": "v1",
+      "id": "360p27p3",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "v3",
+      "id": "360p11p3",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g0",
+      "id": "staircase_g_c_8",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g0",
+      "id": "lift_g_c_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g1",
+      "id": "g107",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g1",
+      "id": "lift_g_1_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g2",
+      "id": "lift_g_2_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g3",
+      "id": "lift_g_3_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "g5",
+      "id": "wc_g_5_1",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "n1",
+      "id": "staircase_n_1_6",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "n1",
+      "id": "staircase_n_1_7",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "n5",
+      "id": "staircase_n_5_4",
+      "reason": "No valid captured geometry; room omitted."
+    },
+    {
+      "key": "d1",
+      "id": "staircase_eda_1_1",
+      "reason": "No valid captured geometry; room omitted."
+    }
+  ]
+}
