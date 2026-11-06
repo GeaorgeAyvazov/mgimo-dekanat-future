@@ -1,7 +1,7 @@
 {
   "base": "http://127.0.0.1:5173",
-  "runAt": "2026-11-06T00:52:20.044Z",
-  "passed": 41,
+  "runAt": "2026-11-06T01:22:06.390Z",
+  "passed": 51,
   "checks": [
     "Anonymous overview denied",
     "Incorrect password denied",
@@ -42,6 +42,16 @@
     "New request remains isolated",
     "Read notices persist",
     "Read notices do not affect another account",
+    "Favorites persist per account",
+    "Favorites are isolated",
+    "Favorite can be removed",
+    "Question validated",
+    "Question stored and routed by server",
+    "Foreign question denied",
+    "Question needs actual answer",
+    "Staff answers question",
+    "Student sees stored answer",
+    "Question does not pretend to be a certificate",
     "Logout clears cookie",
     "Logged-out session denied"
   ]

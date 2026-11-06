@@ -1,5 +1,10 @@
 "use client";
 import {
+  ServiceCenter,
+  DocumentWallet,
+  AppealForm,
+} from "@/components/service-center";
+import {
   useEffect,
   useState,
   useRef,
@@ -7,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  FolderOpen,
   ArrowUpRight,
   ArrowRight,
   ArrowLeft,
@@ -59,6 +65,7 @@ type Data = {
   grades: Grade[];
   lessons: Lesson[];
   notices: Notice[];
+  favorites: string[];
   today: string;
 };
 type View =
@@ -70,24 +77,37 @@ type View =
   | "notifications"
   | "case"
   | "order"
-  | "staff";
+  | "staff"
+  | "wallet";
 const navigation = [
-  { id: "today", label: "Сегодня", icon: LayoutDashboard },
+  {
+    id: "today",
+    label: "Центр сервиса",
+    short: "Сервисы",
+    icon: LayoutDashboard,
+  },
   { id: "schedule", label: "Расписание", icon: CalendarDays },
   { id: "grades", label: "Успеваемость", short: "Учёба", icon: GraduationCap },
   {
     id: "services",
-    label: "Справки и заявки",
-    short: "Справки",
+    label: "Мои обращения",
+    short: "Заявки",
     icon: FileText,
+  },
+  {
+    id: "wallet",
+    label: "Мои документы",
+    short: "Документы",
+    icon: FolderOpen,
   },
   { id: "profile", label: "Мой профиль", short: "Профиль", icon: UserRound },
 ];
 const titles: Record<string, string> = {
-  today: "Сегодня",
+  today: "Центр сервиса",
   schedule: "Расписание",
   grades: "Успеваемость",
-  services: "Справки и заявки",
+  services: "Мои обращения",
+  wallet: "Мои документы",
   profile: "Мой профиль",
   notifications: "Уведомления",
   case: "Моя заявка",
@@ -100,6 +120,7 @@ const iconMap = {
   list: ListChecks,
   book: BookOpen,
   award: Award,
+  message: MessageCircle,
 };
 const DEMO_PASSWORD = "Student2026!";
 async function api<T = Data>(path: string, data?: unknown): Promise<T> {
@@ -128,7 +149,7 @@ function Logo() {
         <i />
       </span>
       <span>
-        деканат<span className="brand-caption">Всё для учёбы</span>
+        студент<span className="brand-caption">Центр сервиса · МГИМО</span>
       </span>
     </div>
   );
@@ -136,11 +157,11 @@ function Logo() {
 function Spinner() {
   return <LoaderCircle className="spin" size={19} aria-hidden="true" />;
 }
-function Status({ value }: { value: string }) {
+function Status({ value, label }: { value: string; label?: string }) {
   return (
     <span className={`status status-${value}`}>
       <span />
-      {statuses[value] || value}
+      {label || statuses[value] || value}
     </span>
   );
 }
@@ -195,41 +216,6 @@ function Login({ onLogin }: { onLogin: () => Promise<void> }) {
   }
   return (
     <main className="login-screen">
-      <section className="login-story">
-        <Logo />
-        <div className="story-body">
-          <span className="eyebrow">СТУДЕНЧЕСКИЙ СЕРВИС</span>
-          <h1>
-            Меньше очередей.
-            <br />
-            Больше студенческой
-            <br />
-            <span>жизни.</span>
-          </h1>
-          <p>
-            Расписание, оценки и нужные документы.
-            <br />
-            Всё рядом. Всё по делу.
-          </p>
-          <div className="story-cards">
-            <div>
-              <CalendarDays />
-              <span>
-                Следующая пара<small>Международные отношения · А-201</small>
-              </span>
-              <CheckCircle2 />
-            </div>
-            <div>
-              <FileText />
-              <span>
-                Справка готова<small>Можно скачать прямо сейчас</small>
-              </span>
-              <CheckCircle2 />
-            </div>
-          </div>
-        </div>
-        <span className="story-footer">Цифровой деканат будущего · МГИМО</span>
-      </section>
       <section className="login-panel">
         <div className="mobile-brand">
           <Logo />
@@ -239,8 +225,8 @@ function Login({ onLogin }: { onLogin: () => Promise<void> }) {
             <span />
             Учебный прототип
           </span>
-          <h2>Привет, студент!</h2>
-          <p className="muted">Войдите, чтобы всё было под рукой.</p>
+          <h2>Вход в центр сервиса</h2>
+          <p className="muted">Введите логин и пароль учебной записи.</p>
           <form onSubmit={submit}>
             <label htmlFor="login">Логин</label>
             <input
@@ -336,7 +322,6 @@ export default function Portal() {
     [entity, setEntity] = useState(""),
     [toast, setToast] = useState(""),
     [search, setSearch] = useState(""),
-    [tab, setTab] = useState("catalog"),
     [selectedDay, setSelectedDay] = useState(-1),
     [week, setWeek] = useState(0),
     [scheduleMode, setScheduleMode] = useState("day"),
@@ -460,7 +445,7 @@ export default function Portal() {
       <div className="initial-load">
         <Logo />
         <Spinner />
-        <p>Собираем ваш учебный день…</p>
+        <p>Загрузка кабинета…</p>
       </div>
     );
   if (!data) {
@@ -540,13 +525,24 @@ export default function Portal() {
           <span>
             {staff ? `${r.student_name} · ${r.student_group}` : s.language}
             <span className="dot-divider">·</span>
-            {r.format === "electronic" ? "Электронная" : "Бумажная"}
+            {r.service === "question"
+              ? "Обращение"
+              : r.format === "electronic"
+                ? "Электронная"
+                : "Бумажная"}
           </span>
           <small>
             От {dateLabel(r.created_at)} · № {r.id.slice(-8).toUpperCase()}
           </small>
         </span>
-        <Status value={r.status} />
+        <Status
+          value={r.status}
+          label={
+            r.service === "question" && r.status === "ready"
+              ? "Решено"
+              : undefined
+          }
+        />
         <ChevronRight size={18} className="muted" />
       </button>
     );
@@ -629,7 +625,6 @@ export default function Portal() {
             <p>Ответ сотрудника и уточнения — прямо в её карточке.</p>
             <button
               onClick={() => {
-                setTab("requests");
                 go(staff ? "staff" : "services");
               }}
             >
@@ -748,213 +743,26 @@ export default function Portal() {
             </div>
           )}
           {view === "today" && !staff && (
-            <>
-              <div className="page-heading">
-                <div>
-                  <div className="eyebrow">
-                    {new Intl.DateTimeFormat("ru-RU", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      timeZone: "Europe/Moscow",
-                    }).format(new Date(today + "T12:00:00Z"))}
-                  </div>
-                  <h1>
-                    Привет, {firstName}
-                    <span className="greeting-dot">.</span>
-                  </h1>
-                  <p>Учебный день — под контролем.</p>
-                </div>
-                <span className="semester-pill">Осенний семестр 2026</span>
-              </div>
-              <section className="welcome-banner">
-                <div>
-                  <span className="banner-kicker">
-                    <span />
-                    СЕРВИСНЫЙ ЦЕНТР ОНЛАЙН
-                  </span>
-                  <h2>
-                    За справкой — сюда.
-                    <br />В деканат идти не нужно.
-                  </h2>
-                  <p>
-                    Закажите документ за пару минут.
-                    <br />
-                    Мы сообщим, когда всё будет готово.
-                  </p>
-                  <button
-                    className="button primary"
-                    onClick={() => go("services")}
-                  >
-                    Заказать справку
-                    <ArrowUpRight size={18} />
-                  </button>
-                </div>
-                <div className="document-art" aria-hidden="true">
-                  <div className="art-orbit orbit-one" />
-                  <div className="art-orbit orbit-two" />
-                  <div className="art-spark">✦</div>
-                  <div className="art-sheet">
-                    <span className="art-logo">
-                      <i />
-                      <i />
-                      <i />
-                      <i />
-                    </span>
-                    <span className="art-title" />
-                    <span className="art-line long" />
-                    <span className="art-line" />
-                    <span className="art-line medium" />
-                    <span className="art-line long" />
-                    <div className="art-seal">
-                      <Check size={28} />
-                    </div>
-                  </div>
-                  <div className="art-notice">
-                    <CheckCircle2 size={19} />
-                    <span>
-                      Готово к скачиванию<small>Электронная справка</small>
-                    </span>
-                  </div>
-                </div>
-              </section>
-              <div className="summary-grid">
-                <button onClick={() => go("schedule")}>
-                  <span className="summary-icon blue">
-                    <CalendarDays size={20} />
-                  </span>
-                  <span>
-                    <strong>
-                      {dayLessons.length}{" "}
-                      {dayLessons.length === 3 ? "пары" : "занятий"}
-                    </strong>
-                    <small>
-                      {dayLessons.length
-                        ? `${dayLessons[0].start} – ${dayLessons.at(-1)!.end}`
-                        : "Сегодня можно выдохнуть"}
-                    </small>
-                  </span>
-                  <ArrowUpRight size={17} />
-                </button>
-                <button
-                  onClick={() => {
-                    setTab("requests");
-                    go("services");
-                  }}
-                >
-                  <span className="summary-icon violet">
-                    <FileText size={20} />
-                  </span>
-                  <span>
-                    <strong>{activeRequests.length} в работе</strong>
-                    <small>
-                      {requests.filter((r) => r.status === "ready").length}{" "}
-                      готовых документов
-                    </small>
-                  </span>
-                  <ArrowUpRight size={17} />
-                </button>
-                <button onClick={() => go("grades")}>
-                  <span className="summary-icon green">
-                    <GraduationCap size={20} />
-                  </span>
-                  <span>
-                    <strong>
-                      {average} <span className="score-outof">/ 100</span>
-                    </strong>
-                    <small>Средний балл за сессию</small>
-                  </span>
-                  <ArrowUpRight size={17} />
-                </button>
-              </div>
-              <div className="dashboard-grid">
-                <section className="panel schedule-panel">
-                  <div className="section-heading">
-                    <h2>Занятия сегодня</h2>
-                    <button
-                      className="text-button"
-                      onClick={() => go("schedule")}
-                    >
-                      Вся неделя
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                  {dayLessons.length ? (
-                    dayLessons.map(lessonCard)
-                  ) : (
-                    <Empty
-                      icon={CalendarDays}
-                      title="Сегодня занятий нет"
-                      text="Расписание на другие дни — во вкладке «Расписание»."
-                    />
-                  )}
-                  <div className="panel-footnote">
-                    <Info size={14} />
-                    Показана ваша учебная группа и языковая подгруппа.
-                  </div>
-                </section>
-                <div className="dashboard-side">
-                  <section className="panel compact-panel">
-                    <div className="section-heading">
-                      <h2>На заметку</h2>
-                      <span className="small-badge">{unread}</span>
-                    </div>
-                    <span className="notice-category">
-                      <Clock3 size={14} />
-                      ДЕДЛАЙН · 20 НОЯБРЯ
-                    </span>
-                    <h3>Думаете об обмене?</h3>
-                    <p>
-                      Подготовьте транскрипт заранее — он понадобится для
-                      заявки.
-                    </p>
-                    <button
-                      className="text-button"
-                      onClick={() => go("order", "transcript-en")}
-                    >
-                      Заказать транскрипт
-                      <ArrowRight size={16} />
-                    </button>
-                  </section>
-                  <section className="panel compact-panel request-teaser">
-                    <div className="section-heading">
-                      <h2>Мои заявки</h2>
-                      <button
-                        className="icon-btn"
-                        aria-label="Все заявки"
-                        onClick={() => {
-                          setTab("requests");
-                          go("services");
-                        }}
-                      >
-                        <ArrowUpRight size={18} />
-                      </button>
-                    </div>
-                    {requests.length ? (
-                      <>
-                        {requests.slice(0, 2).map((r) => (
-                          <button key={r.id} onClick={() => go("case", r.id)}>
-                            <FileText size={19} />
-                            <span>
-                              <strong>
-                                {
-                                  services.find((s) => s.id === r.service)!
-                                    .title
-                                }
-                              </strong>
-                              <Status value={r.status} />
-                            </span>
-                            <ChevronRight size={16} />
-                          </button>
-                        ))}
-                      </>
-                    ) : (
-                      <p>Ваши обращения появятся здесь.</p>
-                    )}
-                  </section>
-                </div>
-              </div>
-            </>
+            <ServiceCenter
+              requests={requests}
+              lessons={dayLessons}
+              favorites={data.favorites || []}
+              go={(v, id) => go(v as View, id)}
+              onFavorite={async (id, active) => {
+                try {
+                  await api("favorites", { service: id, active });
+                  await refresh();
+                } catch (e) {
+                  setToast((e as Error).message);
+                }
+              }}
+            />
+          )}
+          {view === "wallet" && !staff && (
+            <DocumentWallet
+              requests={requests}
+              go={(v, id) => go(v as View, id)}
+            />
           )}
           {view === "schedule" && !staff && (
             <>
@@ -1205,11 +1013,11 @@ export default function Portal() {
           {(view === "services" || view === "staff") && (
             <>
               <PageHeading
-                title={staff ? "Обращения студентов" : "Справки и заявки"}
+                title={staff ? "Обращения студентов" : "Мои обращения"}
                 text={
                   staff
-                    ? "Очередь сервисного центра. Изменения сразу увидит студент."
-                    : "Закажите онлайн. Получите так, как удобно вам."
+                    ? "Очередь сервисного центра. Ответьте студенту в карточке обращения."
+                    : "Заявки на справки, ваши вопросы и ответы сотрудников."
                 }
                 action={
                   <button
@@ -1225,153 +1033,108 @@ export default function Portal() {
                 }
               />
               {!staff && (
-                <div className="page-tabs">
+                <div className="request-actions">
                   <button
-                    className={tab === "catalog" ? "active" : ""}
-                    onClick={() => setTab("catalog")}
+                    className="button primary"
+                    onClick={() => go("today")}
                   >
+                    <Plus size={16} />
                     Заказать документ
                   </button>
                   <button
-                    className={tab === "requests" ? "active" : ""}
-                    onClick={() => setTab("requests")}
+                    className="button secondary"
+                    onClick={() => go("order", "question")}
                   >
-                    Мои заявки <span>{requests.length}</span>
+                    <MessageCircle size={16} />
+                    Задать вопрос
                   </button>
                 </div>
               )}
-              {!staff && tab === "catalog" ? (
-                <>
-                  <div className="service-intro">
-                    <span className="success-icon">
-                      <ShieldCheck size={24} />
-                    </span>
-                    <div>
-                      <strong>Ваши данные уже заполнены</strong>
-                      <p>
-                        Выберите справку и способ получения. В деканат идти
-                        нужно только за бумажным оригиналом.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="service-grid">
-                    {services.map((s) => (
-                      <button
-                        className="service-card"
-                        key={s.id}
-                        onClick={() => go("order", s.id)}
-                      >
-                        <div className="service-card-top">
-                          <ServiceIcon service={s} />
-                          <ArrowUpRight size={19} />
-                        </div>
-                        <span className="service-language">{s.language}</span>
-                        <h2>{s.title}</h2>
-                        <p>{s.description}</p>
-                        <span className="service-term">
-                          <Clock3 size={14} />
-                          {s.term}
-                        </span>
-                      </button>
-                    ))}
-                    <div className="service-help">
-                      <MessageCircle size={29} />
-                      <h2>Не уверены, что выбрать?</h2>
-                      <p>
-                        Для подтверждения статуса студента подойдёт справка об
-                        обучении. Для оценок — выписка или транскрипт.
-                      </p>
-                      <button
-                        className="text-button"
-                        onClick={() => go("order", "enrollment-ru")}
-                      >
-                        Начать со справки
-                        <ArrowRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-                  <p className="page-note">
-                    <Info size={14} />
-                    Все документы прототипа содержат отметку «Учебный образец».
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="filter-row">
-                    <SlidersHorizontal size={16} />
-                    {[
-                      ["all", "Все"],
-                      ["active", "В работе"],
-                      ["ready", "Готовые"],
-                    ].map(([id, label]) => (
-                      <button
-                        key={id}
-                        className={
-                          requestFilter === id ? "filter active" : "filter"
-                        }
-                        onClick={() => setRequestFilter(id)}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                    <span className="muted">{requests.length} заявок</span>
-                  </div>
-                  <section className="panel request-list">
-                    {requests.filter(
+              <div className="filter-row">
+                <SlidersHorizontal size={16} />
+                {[
+                  ["all", "Все"],
+                  ["active", "В работе"],
+                  ["ready", "Готовые"],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    className={
+                      requestFilter === id ? "filter active" : "filter"
+                    }
+                    onClick={() => setRequestFilter(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+                <span className="muted">{requests.length} обращений</span>
+              </div>
+              <section className="panel request-list">
+                {requests.filter(
+                  (r) =>
+                    requestFilter === "all" ||
+                    (requestFilter === "ready"
+                      ? r.status === "ready"
+                      : !["ready", "cancelled"].includes(r.status)),
+                ).length ? (
+                  requests
+                    .filter(
                       (r) =>
                         requestFilter === "all" ||
                         (requestFilter === "ready"
                           ? r.status === "ready"
                           : !["ready", "cancelled"].includes(r.status)),
-                    ).length ? (
-                      requests
-                        .filter(
-                          (r) =>
-                            requestFilter === "all" ||
-                            (requestFilter === "ready"
-                              ? r.status === "ready"
-                              : !["ready", "cancelled"].includes(r.status)),
-                        )
-                        .map(requestCard)
-                    ) : (
-                      <Empty
-                        title="Здесь пока нет заявок"
-                        text="Здесь появятся ваши обращения и готовые документы."
+                    )
+                    .map(requestCard)
+                ) : (
+                  <Empty
+                    title="Здесь пока нет обращений"
+                    text="Закажите справку или задайте вопрос сервисному центру."
+                  >
+                    {!staff && (
+                      <button
+                        className="button primary"
+                        onClick={() => go("today")}
                       >
-                        {!staff && (
-                          <button
-                            className="button primary"
-                            onClick={() => setTab("catalog")}
-                          >
-                            <Plus size={16} />
-                            Заказать справку
-                          </button>
-                        )}
-                      </Empty>
+                        Выбрать услугу
+                      </button>
                     )}
-                  </section>
-                </>
-              )}
+                  </Empty>
+                )}
+              </section>
             </>
           )}
           {view === "order" &&
             !staff &&
             (selectedService ? (
-              <OrderForm
-                key={selectedService.id}
-                service={selectedService}
-                user={user}
-                back={() => go("services")}
-                onCreated={async (r) => {
-                  await refresh();
-                  setToast(
-                    r.status === "ready"
-                      ? "Справка готова! Учебный PDF можно скачать."
-                      : "Заявка принята. Следить за ней можно здесь.",
-                  );
-                  go("case", r.id);
-                }}
-              />
+              selectedService.id === "question" ? (
+                <AppealForm
+                  user={user}
+                  back={() => go("today")}
+                  create={async (payload) => {
+                    const r = await api<Case>("requests", payload);
+                    await refresh();
+                    setToast("Обращение принято и направлено в подразделение");
+                    go("case", r.id);
+                  }}
+                />
+              ) : (
+                <OrderForm
+                  key={selectedService.id}
+                  service={selectedService}
+                  user={user}
+                  back={() => go("today")}
+                  onCreated={async (r) => {
+                    await refresh();
+                    setToast(
+                      r.status === "ready"
+                        ? "Справка готова! Учебный PDF можно скачать."
+                        : "Заявка принята. Следить за ней можно здесь.",
+                    );
+                    go("case", r.id);
+                  }}
+                />
+              )
             ) : (
               <Empty title="Документ не найден">
                 <button
@@ -1387,7 +1150,6 @@ export default function Portal() {
               <button
                 className="back-button"
                 onClick={() => {
-                  setTab("requests");
                   go(staff ? "staff" : "services");
                 }}
               >
@@ -1597,17 +1359,19 @@ export default function Portal() {
         </main>
       </div>
       <nav className="mobile-nav" aria-label="Мобильная навигация">
-        {nav.map((n) => (
-          <button
-            key={n.id}
-            className={currentNav === n.id ? "active" : ""}
-            onClick={() => go(n.id as View)}
-            aria-current={currentNav === n.id ? "page" : undefined}
-          >
-            <n.icon size={21} />
-            <span>{"short" in n ? n.short : n.label}</span>
-          </button>
-        ))}
+        {nav
+          .filter((n) => n.id !== "wallet")
+          .map((n) => (
+            <button
+              key={n.id}
+              className={currentNav === n.id ? "active" : ""}
+              onClick={() => go(n.id as View)}
+              aria-current={currentNav === n.id ? "page" : undefined}
+            >
+              <n.icon size={21} />
+              <span>{"short" in n ? n.short : n.label}</span>
+            </button>
+          ))}
       </nav>
       {toast && (
         <div className="toast" role="status">
@@ -1974,9 +1738,27 @@ function CaseDetail({
       <PageHeading
         title={service.title}
         text={`${service.language} · № ${item.id.slice(-8).toUpperCase()}`}
-        action={<Status value={item.status} />}
+        action={
+          <Status
+            value={item.status}
+            label={
+              item.service === "question" && item.status === "ready"
+                ? "Решено"
+                : undefined
+            }
+          />
+        }
       />
-      {item.status === "ready" && (
+      {item.service === "question" && item.status === "ready" && (
+        <div className="ready-banner">
+          <CheckCircle2 size={25} />
+          <div>
+            <h2>На ваше обращение ответили</h2>
+            <p>Ответ сотрудника сохранён в истории ниже.</p>
+          </div>
+        </div>
+      )}
+      {item.status === "ready" && item.service !== "question" && (
         <div className="ready-banner">
           <span className="success-icon">
             <CheckCircle2 size={27} />
@@ -2002,6 +1784,13 @@ function CaseDetail({
           </a>
         </div>
       )}
+      {item.service === "question" && (
+        <section className="panel appeal-original">
+          <span className="eyebrow">ВАШЕ ОБРАЩЕНИЕ</span>
+          <h2>{item.department}</h2>
+          <p>{item.message}</p>
+        </section>
+      )}
       <div className="case-layout">
         <section className="panel">
           <div className="section-heading">
@@ -2022,7 +1811,11 @@ function CaseDetail({
                 </span>
                 <div>
                   <div className="timeline-title">
-                    <strong>{statuses[event.status]}</strong>
+                    <strong>
+                      {item.service === "question" && event.status === "ready"
+                        ? "Ответ получен"
+                        : statuses[event.status]}
+                    </strong>
                     <time>{dateLabel(event.created_at, true)}</time>
                   </div>
                   {event.comment && <p>{event.comment}</p>}
@@ -2068,7 +1861,11 @@ function CaseDetail({
               )}
               <div className="form-field">
                 <label htmlFor="case-comment">
-                  {staff ? "Комментарий студенту" : "Ваш ответ"}
+                  {staff
+                    ? item.service === "question"
+                      ? "Ответ студенту"
+                      : "Комментарий студенту"
+                    : "Ваш ответ"}
                 </label>
                 <textarea
                   id="case-comment"
@@ -2077,7 +1874,9 @@ function CaseDetail({
                   rows={3}
                   maxLength={1000}
                   required={
-                    !staff || ["needs_info", "cancelled"].includes(nextStatus)
+                    !staff ||
+                    ["needs_info", "cancelled"].includes(nextStatus) ||
+                    (item.service === "question" && nextStatus === "ready")
                   }
                   minLength={5}
                   placeholder={
@@ -2121,11 +1920,17 @@ function CaseDetail({
               <dd>{dateLabel(item.created_at, true)}</dd>
             </div>
             <div>
-              <dt>Способ получения</dt>
+              <dt>
+                {item.service === "question"
+                  ? "Способ ответа"
+                  : "Способ получения"}
+              </dt>
               <dd>
-                {item.format === "electronic"
-                  ? "Электронный документ"
-                  : "Бумажный оригинал"}
+                {item.service === "question"
+                  ? "В личном кабинете"
+                  : item.format === "electronic"
+                    ? "Электронный документ"
+                    : "Бумажный оригинал"}
               </dd>
             </div>
             {item.organization && (
@@ -2160,8 +1965,9 @@ function CaseDetail({
           <div className="demo-document-note">
             <ShieldCheck size={17} />
             <span>
-              Учебный документ с вымышленными данными, без официальной
-              электронной подписи.
+              {item.service === "question"
+                ? "Учебное обращение. Реальным подразделениям не отправляется."
+                : "Учебный документ с вымышленными данными, без официальной электронной подписи."}
             </span>
           </div>
         </aside>

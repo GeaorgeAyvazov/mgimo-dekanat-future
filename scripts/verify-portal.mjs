@@ -9,7 +9,7 @@ function check(name, test) {
   passed++;
 }
 function client() {
-  let cookie = "";
+  const cookies = new Map();
   return {
     async call(path, data, options = {}) {
       const r = await fetch(base + "/api/portal/" + path, {
@@ -22,13 +22,19 @@ function client() {
                 Origin: base,
               }
             : {}),
-          ...(cookie ? { Cookie: cookie } : {}),
+          ...(cookies.size ? { Cookie: [...cookies.values()].join("; ") } : {}),
           ...options.headers,
         },
         ...(data ? { body: JSON.stringify(data) } : {}),
       });
-      const set = r.headers.get("set-cookie");
-      if (set) cookie = set.split(";")[0];
+      // Hosting may add its own cookies. Keep them by name, like a browser,
+      // instead of replacing the session with the latest Set-Cookie header.
+      for (const set of r.headers.getSetCookie()) {
+        const pair = set.split(";")[0];
+        const name = pair.slice(0, pair.indexOf("="));
+        if (/Max-Age=0(?:;|$)/i.test(set)) cookies.delete(name);
+        else cookies.set(name, pair);
+      }
       const value = r.headers.get("content-type")?.includes("application/json")
         ? await r.json()
         : new Uint8Array(await r.arrayBuffer());
@@ -242,6 +248,81 @@ check(
   "Read notices do not affect another account",
   out.value.notices.some((n) => !n.read),
 );
+
+const beforeA = (await a.call("overview")).value.favorites;
+const beforeB = (await b.call("overview")).value.favorites;
+await a.call("favorites", { service: "english-level", active: true });
+out = await a.call("overview");
+check(
+  "Favorites persist per account",
+  out.value.favorites.includes("english-level"),
+);
+out = await b.call("overview");
+check(
+  "Favorites are isolated",
+  JSON.stringify(out.value.favorites) === JSON.stringify(beforeB),
+);
+await a.call("favorites", { service: "english-level", active: false });
+out = await a.call("overview");
+check(
+  "Favorite can be removed",
+  !out.value.favorites.includes("english-level"),
+);
+if (beforeA.includes("english-level"))
+  await a.call("favorites", { service: "english-level", active: true });
+out = await a.call("requests", {
+  service: "question",
+  format: "electronic",
+  topic: "academic",
+  message: "Коротко",
+  idempotencyKey: crypto.randomUUID(),
+});
+check("Question validated", out.r.status === 400);
+out = await a.call("requests", {
+  service: "question",
+  format: "electronic",
+  topic: "academic",
+  department: "Attacker-selected",
+  message: "Учебный вопрос: где уточнить порядок изменения языковой подгруппы?",
+  idempotencyKey: crypto.randomUUID(),
+});
+const appeal = out.value.id;
+check(
+  "Question stored and routed by server",
+  out.r.status === 201 &&
+    out.value.department === "Учебный офис филиала" &&
+    out.value.message.includes("подгруппы"),
+);
+out = await b.call("requests/" + appeal);
+check("Foreign question denied", out.r.status === 404);
+await office.call("requests/" + appeal + "/status", {
+  status: "working",
+  expectedStatus: "created",
+  comment: "Проверяем вопрос",
+});
+out = await office.call("requests/" + appeal + "/status", {
+  status: "ready",
+  expectedStatus: "working",
+  comment: "",
+});
+check("Question needs actual answer", out.r.status === 400);
+out = await office.call("requests/" + appeal + "/status", {
+  status: "ready",
+  expectedStatus: "working",
+  comment:
+    "Учебный ответ: порядок изменения подгруппы уточняется в учебном офисе; это демонстрационный пример.",
+});
+check(
+  "Staff answers question",
+  out.r.status === 200 && out.value.status === "ready",
+);
+out = await a.call("requests/" + appeal);
+check(
+  "Student sees stored answer",
+  out.value.events.at(-1).comment.includes("Учебный ответ"),
+);
+out = await a.call("requests/" + appeal + "/document");
+check("Question does not pretend to be a certificate", out.r.status === 404);
 out = await a.call("logout", {});
 check(
   "Logout clears cookie",

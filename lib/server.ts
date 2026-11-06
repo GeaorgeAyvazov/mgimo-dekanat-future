@@ -1,7 +1,13 @@
 import { env } from "cloudflare:workers";
 import { compare } from "bcryptjs";
 import { demoUsers, lessons, notices } from "./demo-data";
-import { services, type Student, type Case, type CaseEvent } from "./catalog";
+import {
+  services,
+  topics,
+  type Student,
+  type Case,
+  type CaseEvent,
+} from "./catalog";
 import { DEMO_HASH } from "./demo-hash";
 export type UserRow = Student & { password_hash: string; grades: string };
 export const database = () => {
@@ -270,7 +276,12 @@ export async function overview(user: UserRow) {
     .prepare("SELECT notice_id FROM notification_reads WHERE user_id=?")
     .bind(user.id)
     .all<{ notice_id: string }>();
+  const favorites = await db
+    .prepare("SELECT service FROM favorites WHERE user_id=?")
+    .bind(user.id)
+    .all<{ service: string }>();
   return {
+    favorites: favorites.results.map((f) => f.service),
     user: publicUser(user),
     requests: cases.results,
     grades: JSON.parse(user.grades),
@@ -328,6 +339,16 @@ export async function createRequest(req: Request, user: UserRow) {
     phone = field(data, "phone", 30),
     recipient = field(data, "recipient", 30) || "self",
     representative = field(data, "representative");
+  const topic = topics.find((t) => t.id === data.topic),
+    message = field(data, "message", 2000);
+  if (
+    service.id === "question" &&
+    (!topic || message.length < 10 || data.format !== "electronic")
+  )
+    throw new ApiError(
+      400,
+      "Выберите тему и опишите вопрос подробнее (от 10 символов)",
+    );
   if (fields.includes("organization") && organization.length < 2)
     throw new ApiError(400, "Укажите организацию или «По месту требования»");
   if (
@@ -374,7 +395,7 @@ export async function createRequest(req: Request, user: UserRow) {
   const statements = [
     db
       .prepare(
-        "INSERT OR IGNORE INTO requests (id,owner_id,service,format,organization,latin_name,phone,recipient,representative,status,created_at,due_at,idempotency_key) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT OR IGNORE INTO requests (id,owner_id,service,format,organization,latin_name,phone,recipient,representative,status,created_at,due_at,idempotency_key,topic,message,department) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       )
       .bind(
         id,
@@ -390,6 +411,9 @@ export async function createRequest(req: Request, user: UserRow) {
         created,
         dueDate(automatic),
         key,
+        service.id === "question" ? topic!.id : "",
+        service.id === "question" ? message : "",
+        service.id === "question" ? topic!.department : "Сервисный центр",
       ),
     db
       .prepare(
@@ -429,6 +453,8 @@ export async function updateRequest(req: Request, user: UserRow, id: string) {
     throw new ApiError(409, "Статус уже изменился. Обновите карточку");
   if (!allowed[row.status]?.includes(status))
     throw new ApiError(400, "Такой переход статуса недоступен");
+  if (row.service === "question" && status === "ready" && comment.length < 10)
+    throw new ApiError(400, "Добавьте ответ студенту (от 10 символов)");
   if ((status === "needs_info" || status === "cancelled") && comment.length < 5)
     throw new ApiError(400, "Добавьте пояснение для студента");
   const db = database();

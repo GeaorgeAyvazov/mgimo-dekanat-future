@@ -49,6 +49,39 @@ export const services = [
     icon: "award",
     fields: ["latinName", "phone"],
   },
+  {
+    id: "question",
+    title: "Обращение в сервисный центр",
+    language: "Вопрос и ответ сотрудника",
+    description: "Задайте вопрос — мы направим его в нужное подразделение",
+    term: "До 3 рабочих дней",
+    automatic: false,
+    icon: "message",
+    fields: ["topic", "message"],
+  },
+] as const;
+export const topics = [
+  {
+    id: "documents",
+    label: "Справки и документы",
+    department: "Сервисный центр",
+  },
+  {
+    id: "academic",
+    label: "Учебный процесс",
+    department: "Учебный офис филиала",
+  },
+  {
+    id: "mobility",
+    label: "Обмен и международные программы",
+    department: "Международный отдел",
+  },
+  { id: "finance", label: "Оплата и договор", department: "Договорной отдел" },
+  {
+    id: "technical",
+    label: "Доступ в учебные системы",
+    department: "Поддержка цифровых сервисов",
+  },
 ] as const;
 export type Service = (typeof services)[number];
 export const statuses: Record<string, string> = {
@@ -88,6 +121,9 @@ export type Case = {
   phone: string;
   recipient: string;
   representative: string;
+  topic?: string;
+  message?: string;
+  department?: string;
   status: string;
   created_at: string;
   due_at: string;

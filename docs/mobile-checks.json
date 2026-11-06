@@ -1,42 +1,32 @@
 [
   {
-    "label": "Сегодня",
+    "label": "Сервисы",
     "client": 345,
-    "h1": "Привет, Алина.",
     "scroll": 345,
-    "width": 360,
-    "observed": true
+    "width": 360
   },
   {
     "label": "Расписание",
     "client": 345,
-    "h1": "Расписание",
     "scroll": 345,
-    "width": 360,
-    "observed": true
+    "width": 360
   },
   {
     "label": "Учёба",
     "client": 345,
-    "h1": "Успеваемость",
     "scroll": 345,
-    "width": 360,
-    "observed": true
+    "width": 360
   },
   {
-    "label": "Справки",
+    "label": "Заявки",
     "client": 345,
-    "h1": "Справки и заявки",
     "scroll": 345,
-    "width": 360,
-    "observed": true
+    "width": 360
   },
   {
     "label": "Профиль",
     "client": 345,
-    "h1": "Мой профиль",
     "scroll": 345,
-    "width": 360,
-    "observed": true
+    "width": 360
   }
 ]

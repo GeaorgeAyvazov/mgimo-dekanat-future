@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./service-center.css";
 
 export const metadata: Metadata = {
-  title: "Деканат — всё для учёбы",
+  title: "Студент — центр сервиса МГИМО",
   description:
     "Расписание, успеваемость и справки в одном месте. Учебный прототип.",
   icons: {

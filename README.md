@@ -1,6 +1,6 @@
-# Деканат будущего
+# Центр сервиса «Студент» · МГИМО
 
-Работающий учебный прототип личного кабинета: расписание, успеваемость, пять видов справок, статусы, документы, уведомления, профиль и обработка обращений сотрудником. Дизайн и сценарии основаны на исследовании студенческого сервиса ВШЭ и проблем разрозненных систем МГИМО. Только вымышленные данные.
+Работающий учебный прототип сервисного центра и личного кабинета: расписание, успеваемость, пять видов справок, статусы, документы, уведомления, профиль, избранное, подбор услуги, архив документов, единое обращение с маршрутизацией и обработка обращений сотрудником. Дизайн и сценарии основаны на исследовании студенческого сервиса ВШЭ и проблем разрозненных систем МГИМО. Только вымышленные данные.
 
 Тестовые аккаунты и сценарии: [docs/JURY.md](docs/JURY.md). Архитектура и границы прототипа: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -12,6 +12,7 @@
 npm ci
 npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_freezing_swarm.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_damp_network.sql
 npm run dev
 ```
 

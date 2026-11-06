@@ -39,6 +39,9 @@ export const requests = sqliteTable(
     phone: text("phone").notNull(),
     recipient: text("recipient").notNull(),
     representative: text("representative").notNull(),
+    topic: text("topic").notNull().default(""),
+    message: text("message").notNull().default(""),
+    department: text("department").notNull().default(""),
     status: text("status").notNull(),
     createdAt: text("created_at").notNull(),
     dueAt: text("due_at").notNull(),
@@ -66,4 +69,11 @@ export const attempts = sqliteTable("login_attempts", {
   key: text("key").primaryKey(),
   count: integer("count").notNull(),
   until: integer("until").notNull(),
+});
+export const favorites = sqliteTable("favorites", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  service: text("service").notNull(),
 });
