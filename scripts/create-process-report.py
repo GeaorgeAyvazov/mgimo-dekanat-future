@@ -1,0 +1,134 @@
+"""Reproducible report from actual research, code and browser screenshots."""
+from pathlib import Path
+from xml.sax.saxutils import escape
+import re
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak, KeepTogether
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.enums import TA_LEFT
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / 'output/pdf'
+OUT.mkdir(parents=True, exist_ok=True)
+pdfmetrics.registerFont(TTFont('DejaVu', 'C:/Windows/Fonts/DejaVuSans.ttf'))
+pdfmetrics.registerFont(TTFont('DejaVuBold', 'C:/Windows/Fonts/DejaVuSans-Bold.ttf'))
+pdfmetrics.registerFontFamily('DejaVu', normal='DejaVu', bold='DejaVuBold')
+blue = colors.HexColor('#0050CF'); ink=colors.HexColor('#202B40'); muted=colors.HexColor('#6A7890')
+styles={
+ 'title':ParagraphStyle('title',fontName='DejaVuBold',fontSize=30,leading=38,textColor=ink,spaceAfter=17),
+ 'h1':ParagraphStyle('h1',fontName='DejaVuBold',fontSize=20,leading=28,textColor=ink,spaceAfter=17),
+ 'h2':ParagraphStyle('h2',fontName='DejaVuBold',fontSize=12,leading=18,textColor=blue,spaceBefore=14,spaceAfter=8),
+ 'body':ParagraphStyle('body',fontName='DejaVu',fontSize=10,leading=15.6,textColor=ink,spaceAfter=10),
+ 'small':ParagraphStyle('small',fontName='DejaVu',fontSize=8.1,leading=12,textColor=muted,spaceAfter=8),
+ 'table':ParagraphStyle('table',fontName='DejaVu',fontSize=8.3,leading=12,textColor=ink),
+ 'eyebrow':ParagraphStyle('eyebrow',fontName='DejaVuBold',fontSize=8,leading=13,textColor=blue,spaceAfter=12),
+}
+story=[]
+def p(text,style='body'): story.append(Paragraph(text,styles[style]))
+def page(label,title):
+ if story: story.append(PageBreak())
+ p(label.upper(),'eyebrow');p(title,'h1')
+def image(name,width=500,max_height=360):
+ path=ROOT/'docs/screenshots'/name
+ im=Image(str(path)); ratio=min(width/im.imageWidth,max_height/im.imageHeight)
+ im.drawWidth=im.imageWidth*ratio;im.drawHeight=im.imageHeight*ratio;im.hAlign='CENTER';story.extend([im,Spacer(1,12)])
+def table(rows,widths,header=True):
+ t=Table([[Paragraph(escape(str(c)),styles['table']) for c in row] for row in rows],colWidths=widths,hAlign='LEFT')
+ t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#EDF3FF') if header else colors.white),('LINEBELOW',(0,0),(-1,-1),.4,colors.HexColor('#E5EAF1')),('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),9),('RIGHTPADDING',(0,0),(-1,-1),9),('TOPPADDING',(0,0),(-1,-1),8),('BOTTOMPADDING',(0,0),(-1,-1),8)]));story.extend([t,Spacer(1,13)])
+
+p('ПРОЕКТ / 06 НОЯБРЯ 2026','eyebrow')
+p('Деканат будущего','title')
+p('Как из разрозненных учебных сервисов получился работающий кабинет со справочным столом онлайн.','body')
+image('04-today-desktop.png',max_height=310)
+p('Прототип открывается в браузере. Студент может войти, посмотреть расписание и оценки, заказать документ, увидеть историю и скачать учебный PDF. Есть отдельная роль сотрудника.','body')
+p('Два студента и сотрудник','h2')
+table([['Роль','Логин','Пароль'],['Алина, МО-21','alina.demo','Student2026!'],['Максим, БИ-31','maxim.demo','Student2026!'],['Сервисный центр','office.demo','Student2026!']],[205,145,150])
+p('Самостоятельный учебный проект в контексте МГИМО. Все записи, оценки и контакты вымышлены. Документы не являются справками вуза.','small')
+
+page('01 / исследование','Начали с задачи студента')
+p('Студенту нужно быстро получить результат: найти аудиторию, понять успеваемость, заказать справку. В исследованных системах МГИМО эти действия распределены между несколькими кабинетами и сайтом. Пользователь выбрал справочный стол главным направлением.','body')
+p('Что проверено в реальных кабинетах','h2')
+p('Пользователь сам выполнил вход во встроенном браузере. Ассистент изучал доступные разделы МГИМО и ВШЭ, пять форм справок, способы выдачи и историю уже завершённых обращений. Реальные заявки для эксперимента не отправлялись.','body')
+p('В доступном аккаунте МГИМО не обнаружен сопоставимый каталог пяти услуг. Это ограниченное наблюдение; отсутствие услуг для всех студентов или филиалов не доказано. Интервью и массовые опросы не проводились.','body')
+ref=ROOT/'docs/research/evidence/hse-services-user-reference.png'
+im=Image(str(ref));ratio=500/im.imageWidth;im.drawWidth=500;im.drawHeight=ratio*im.imageHeight;story.extend([im,Spacer(1,10)])
+p('Референс: предоставленный пользователем каталог ВШЭ, без данных профиля.','small')
+p('Что дали зарубежные примеры','h2')
+p('<b>MIT Atlas:</b> следующие действия и помощь рядом с задачей. <b>ETH myStudies:</b> связь дисциплин, расписания, экзаменов и результатов. <b>TUMonline:</b> документы самообслуживания. <b>NTU One Stop:</b> единое окно, включая подготовку очного визита. Закрытые иностранные кабинеты не исследовались.','body')
+p('<link href="https://ist.mit.edu/mit-apps/atlas-mobile" color="#0050CF">MIT Atlas</link> · <link href="https://ethz.ch/students/en/studies/academic-support/web-based-platforms/mystudies.html" color="#0050CF">ETH myStudies</link> · <link href="https://www.tum.de/en/studies/during-your-studies/organizing-your-studies/tumonline" color="#0050CF">TUMonline</link> · <link href="https://www.ntu.edu.sg/life-at-ntu/student-life/student-services/onestop" color="#0050CF">NTU One Stop</link>. Подробные источники и ограничения находятся в docs/research.','small')
+
+page('02 / сценарии и дизайн','Пять услуг, один понятный путь')
+p('Справка об обучении на русском и английском, выписка из зачётной книжки, академический транскрипт и справка об уровне английского. Каждая карточка объясняет назначение и срок.','body')
+image('07-catalog-desktop.png',max_height=340)
+p('Что взяли у ВШЭ','h2')
+p('Предзаполнение учебных данных, только нужные дополнительные поля, выбор электронного или бумажного документа, история с комментариями и доступный результат. Из открытых CSS по методике Leanrea измерены синий #0050CF, белые панели, скругления и ритм отступов.','body')
+p('В собственном приложении заново созданы код, логотип, иконографика и CSS-иллюстрация. Нет скопированных исходников кабинета. Главная показывает занятия и обращения; оценки ведут к выписке, напоминание об обмене - к транскрипту.','body')
+
+page('03 / мобильная версия','Полный сценарий с телефона')
+imgs=[]
+for name in ['01-today-mobile-360.png','08-schedule-mobile-360.png','09-grades-mobile-360.png']:
+ im=Image(str(ROOT/'docs/screenshots'/name));ratio=153/im.imageWidth;im.drawWidth=153;im.drawHeight=ratio*im.imageHeight;imgs.append(im)
+t=Table([imgs],colWidths=[167,167,167]);t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),10)]));story.extend([t,Spacer(1,18)])
+p('Реальные снимки приложения при ширине окна 360 px. Измерено: innerWidth=360, scrollWidth=clientWidth=345; 15 px занимает полоса прокрутки тестовой среды. Во всех пяти основных разделах горизонтального переполнения нет.','small')
+p('Пять пунктов снизу: сегодня, расписание, учёба, справки и профиль. Длинные названия переносятся. Формы идут в одну колонку; поля телефона и имени доступны без уменьшения масштаба. Статусы обозначены текстом и цветом.','body')
+p('Отдельно проверены бумажный вариант и представитель: поля ФИО получателя появляются по выбору. У электронной справки на русском после отправки открывается готовая заявка; PDF действительно скачан через браузер.','body')
+
+page('04 / замкнутый процесс','Сотрудник отвечает в той же заявке')
+image('12-staff-processing-desktop.png',max_height=270)
+p('Сотрудник видит очередь и владельца обращения, берёт заявку в работу, запрашивает уточнение или завершает её. Отмена и уточнение требуют пояснения. Ответ студента возвращает обращение в работу.','body')
+image('13-student-sees-completion.png',max_height=260)
+p('Нижний снимок: Максим повторно вошёл после завершения сотрудником. Видны обновлённый статус, комментарий, место учебной выдачи и скачивание файла. Это сохранённое серверное состояние, не анимация таймера.','small')
+
+page('05 / данные и защита','Как устроена безопасность')
+p('<b>Вход.</b> В базе хранится bcrypt-хеш пароля (cost 12). После входа сервер выдаёт случайный 256-битный пропуск, в базе хранит только его SHA-256. Cookie - HttpOnly, SameSite=Lax, Secure на HTTPS, срок 8 часов. Выход удаляет сессию.','body')
+p('<b>Изоляция.</b> Профиль определяется сессией. Каждое чтение заявки и файла студента проверяет одновременно идентификатор и владельца. Роль сотрудника проверяется сервером, не берётся из формы. Запросы параметризованы; запись проверяет Origin, специальный заголовок и поля.','body')
+image('14-foreign-case-denied.png',max_height=240)
+p('Максим подставил адрес заявки Алины. Приложение показывает «Заявка недоступна», API и файл возвращают 404. Анонимный запрос получает 401.','small')
+p('<b>Хранение.</b> D1 сохраняет заявки, события, прочитанность и сессии. Схему создают миграции. Повторная отправка использует уникальный ключ, изменение статуса и история записываются транзакцией. Ключей сервисов и ИИ в продукте нет.','body')
+p('<b>PDF.</b> Файл собирается сервером из записи владельца, содержит кириллицу и маркировку учебного образца. Подписи вуза нет. Реальное внедрение потребует SSO, регламентов, электронной подписи и требований к обработке персональных данных.','body')
+
+page('06 / инструменты','Чем именно пользовались')
+text=(ROOT/'docs/PROCESS.md').read_text(encoding='utf-8')
+block=text.split('| Инструмент |')[1].split('\n\n')[0]
+rows=[['Инструмент','Применение']]
+for line in block.splitlines():
+ if line.startswith('|') and not line.startswith('|---'):
+  cells=[re.sub(r'`','',x.strip()) for x in line.strip('|').split('|')]
+  if len(cells)==2:rows.append(cells)
+table(rows,[168,332])
+p('Не использовались Figma, Cursor, Claude Code и генераторы картинок. ИИ применён для исследования, проектирования, программирования, проверки и отчёта; студенческий кабинет не вызывает внешнюю модель.','small')
+
+page('07 / постановка задач','Промпты, решения и ручной вклад')
+p('Точные короткие цитаты пользователя','h2')
+quotes=[('Исследование до кода','Сейчас мы подготовку ведем полностью проект делать не правильно на данном этапе.'),('Работа с закрытыми страницами','Используй компьютер юз, ведь там понт в том что я в лк зашел и там и там, и ты можешь больше изучить'),('Визуальное направление','ну так посмотри на сайте вышки ведь в лк все есть и то как шла заявка и тд, в целом дизайн вышкинский возьмем во многом.'),('Начало разработки','к заданию приступить')]
+for title,q in quotes:p('<b>'+title+':</b> «'+escape(q)+'»','body')
+p('Рабочие задания ассистенту - пересказ этапов','h2')
+p('1. Отделить подтверждённые наблюдения от гипотез, не переносить персональные данные.<br/>2. Спроектировать пять услуг, условные поля и мобильный сценарий.<br/>3. Развести двух студентов и сотрудника, проверять владельца на сервере.<br/>4. Замкнуть обработку заявки и ответы сотрудника.<br/>5. Проверить прямые адреса чужих файлов, сохранение, PDF и экран 360 px.','body')
+p('Субагент ui_reference получил ограниченный разбор уже собранных заметок. Результат: приоритет действий на главной, каталог и мои заявки, нижняя мобильная навигация, пустые состояния и понятные статусы. Полный исходный диалог и команды остаются в чате Codex; пересказ не выдаётся за стенограмму.','body')
+p('Вклад человека','h2')
+p('Пользователь задал проблему, выбрал справочный стол и сайты, вошёл в реальные кабинеты и согласовал направление ВШЭ. Ассистент написал код, стили, тексты, проверки и этот отчёт. Интервью, согласование с филиалом и пользовательское программирование не зафиксированы.','body')
+
+page('08 / итерации и проверка','Что пришлось исправить')
+items=[
+ ('Chrome не подключился','Перешли во встроенный браузер, пользователь вошёл сам.'),
+ ('Ранняя имитация телефона не изменила ширину','Тогда мобильный тест не заявляли. Собственный прототип позднее проверили по реальным DOM-размерам.'),
+ ('В сборке не разрешились URL шрифта Inter','Шрифт перенесён в public/fonts и подключён локально.'),
+ ('TypeScript не знал тип ответа API','Добавлены конкретные типы данных и заявки.'),
+ ('Тест ожидал лишнее событие','Проверили цепочку: принято, работа, уточнение, ответ/работа, готово. Исправили ошибочное ожидание шести событий на пять.'),
+ ('Навигация прокручивала шапку','Фокус блока изменён на preventScroll; после осмотра улучшена читаемость подписей.'),
+]
+for title,body in items:p('<b>'+title+'.</b> '+body,'body')
+p('Подтверждённая проверка','h2')
+p('<b>41 сценарий API прошёл успешно.</b> Вход и отказ, разные данные, чужая заявка и файл, CSRF, валидация, все пять услуг, повторная отправка, настоящий PDF, роли, конфликт статусов, уточнение, ответ, готовность, уведомления и выход. Браузером проверены мобильные и настольные экраны и фактическая загрузка PDF.','body')
+p('Первым вариантом был работающий интерфейс. Статический макет не создавался; в отчёте нет выдуманных ранних вариантов. Реальные скриншоты и журналы проверок приложены к исходникам.','body')
+p('Что ещё требуется перед конкурсной подачей','h2')
+p('Проверить публичную ссылку из России без VPN, обеспечить работу до 28 ноября и разместить архив исходников в принятом организаторами хранилище. Публикация сама по себе не подтверждает региональную доступность. Независимый пентест, нагрузочный тест и тест с экранным диктором не проводились.','body')
+p('Полный подробный журнал: docs/PROCESS.md. Сценарий жюри: docs/JURY.md. Технические границы: docs/ARCHITECTURE.md.','small')
+
+def footer(canvas,doc):
+ canvas.saveState();canvas.setStrokeColor(colors.HexColor('#E1E7F1'));canvas.line(47,43,548,43);canvas.setFont('DejaVu',7.5);canvas.setFillColor(muted);canvas.drawString(47,29,'Деканат будущего / Процесс создания / 06.11.2026');canvas.drawRightString(548,29,str(doc.page));canvas.restoreState()
+doc=SimpleDocTemplate(str(OUT/'process-report.pdf'),pagesize=(595.28,841.89),rightMargin=47,leftMargin=47,topMargin=45,bottomMargin=61,title='Деканат будущего - процесс создания',author='Учебный проект, созданный с OpenAI Codex')
+doc.build(story,onFirstPage=footer,onLaterPages=footer)
+print(OUT/'process-report.pdf')

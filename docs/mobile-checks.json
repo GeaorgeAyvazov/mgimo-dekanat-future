@@ -1,0 +1,42 @@
+[
+  {
+    "label": "Сегодня",
+    "client": 345,
+    "h1": "Привет, Алина.",
+    "scroll": 345,
+    "width": 360,
+    "observed": true
+  },
+  {
+    "label": "Расписание",
+    "client": 345,
+    "h1": "Расписание",
+    "scroll": 345,
+    "width": 360,
+    "observed": true
+  },
+  {
+    "label": "Учёба",
+    "client": 345,
+    "h1": "Успеваемость",
+    "scroll": 345,
+    "width": 360,
+    "observed": true
+  },
+  {
+    "label": "Справки",
+    "client": 345,
+    "h1": "Справки и заявки",
+    "scroll": 345,
+    "width": 360,
+    "observed": true
+  },
+  {
+    "label": "Профиль",
+    "client": 345,
+    "h1": "Мой профиль",
+    "scroll": 345,
+    "width": 360,
+    "observed": true
+  }
+]

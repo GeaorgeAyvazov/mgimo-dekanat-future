@@ -1,0 +1,45 @@
+{
+  "kind": "observed-design-reference",
+  "observedOn": "2026-11-06",
+  "source": "https://lk.hse.ru/",
+  "scope": "Authenticated catalogue and request forms; read-only DOM and computed styles, plus public CSS copies. Not a complete design system or application implementation.",
+  "colors": {
+    "primaryAction": "#0050CF",
+    "pageSurface": "#F8F9FB",
+    "cardSurface": "#FFFFFF",
+    "foreground": "#0F0F14",
+    "highlightSurface": "#F0F5FF",
+    "completedStep": "#228B45",
+    "bodyUnderlay": "#EDEFF3"
+  },
+  "typography": {
+    "bodyComputedFamily": "HSE sans",
+    "bodyFontSizePx": 16,
+    "bodyLineHeightPx": 20,
+    "serviceTitleFontSizePx": 16,
+    "serviceTitleWeight": 600,
+    "catalogueHeadingComputedFamily": "Proxima Nova, sans-serif",
+    "catalogueHeadingFontSizePx": 30,
+    "catalogueHeadingWeight": 600,
+    "catalogueHeadingLineHeightPx": 39.9,
+    "note": "Computed font-family names describe the CSS declarations; font-file delivery and licensing were not evaluated. Values are scoped to the measured components."
+  },
+  "components": {
+    "serviceCard": { "radiusPx": 12, "shadow": "none", "titleWeight": 600 },
+    "cataloguePanel": { "radiusPx": 12, "paddingObservedPx": 24, "gapObservedPx": 24 },
+    "catalogueGrid": { "gapPx": 24, "observedSizingRule": "repeat(auto-fill, minmax(min(360px, 100%), 1fr))" },
+    "catalogueSection": { "gapPx": 16 },
+    "submitButton": { "heightPx": 40, "radiusPx": 8, "fontSizePx": 16, "fontWeight": 600, "paddingObserved": "8px 15px", "color": "#FFFFFF", "background": "#0050CF" },
+    "focusedSelect": { "heightPx": 40, "radiusPx": 8, "horizontalPaddingPx": 12, "background": "#FFFFFF", "focusShadowComputed": "rgb(0, 80, 207) 0px 0px 0px 1px inset, rgba(0, 80, 207, 0.2) 0px 0px 0px 2px" }
+  },
+  "publicStaticEvidence": [
+    { "url": "https://lk.hse.ru/css/ElkUnifiedCatalog.DubyGaUz.css", "bytes": 2948, "sha256": "b490e6a12966f95d6a9cc2b165f8b01d9f96927346bd071712d98ab2cc63a605", "inspection": "Targeted CSS slices: primary color, highlight color, chip states, focus-visible and modal rules at max-width 768px." },
+    { "url": "https://lk.hse.ru/css/menuWrapper.CXpHB1gj.css", "bytes": 53988, "sha256": "19afde90e3acb2cc988b9e09f0273d309034218efd54a319519812a33e0e3a69", "inspection": "Targeted color and typography slices; no full stylesheet embedded in this reference." }
+  ],
+  "leanrea": { "url": "https://github.com/aicodeking/leanrea", "skillSource": "https://raw.githubusercontent.com/aicodeking/leanrea/main/leanrea/SKILL.md", "bytes": 8374, "sha256": "53581bd7fb1fae4352ab43252e67b84667b68895a68e372b99d302b58d9c782d", "methodUsed": "Copy public resources to a temporary directory, inspect narrowly with rg, distinguish static findings from observed UI behavior." },
+  "limits": [
+    "The large index stylesheet timed out; no claim of complete CSS extraction is made.",
+    "Responsive intent in CSS does not establish successful mobile behavior at 360px.",
+    "No authentication cookies, personal data, private attachment links or university application source bundles are included."
+  ]
+}
