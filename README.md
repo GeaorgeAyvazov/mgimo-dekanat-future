@@ -4,6 +4,8 @@
 
 Тестовые аккаунты и сценарии: [docs/JURY.md](docs/JURY.md). Архитектура и границы прототипа: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+Репозиторий: https://github.com/GeaorgeAyvazov/mgimo-dekanat-future
+
 Продуктовый бизнес-кейс, user stories, приоритеты и роадмап: [docs/product/PLAN.md](docs/product/PLAN.md). Выполнение текущей итерации и её приёмка: [docs/product/EXECUTION.md](docs/product/EXECUTION.md).
 
 ## Локальный запуск
@@ -38,7 +40,7 @@ node scripts/verify-office-report.mjs
 
 ## Публикация и перенос
 
-Проект подготовлен для Sites / Cloudflare Worker с D1 binding `DB`, объявленным в `.openai/hosting.json`. Миграции схемы лежат в `drizzle/`. Для переноса на самостоятельный Cloudflare deployment нужны собственный Worker, D1, перенос конфигурации и применение миграций. Не публикуйте локальную базу и сессии. ИИ-сервисов и их ключей приложение не использует.
+Проект подготовлен для Sites / Cloudflare Worker с D1 binding `DB`, объявленным в `.openai/hosting.json`. Миграции схемы лежат в `drizzle/`. Для переноса на самостоятельный сервер используйте инструкции `deploy/UBUNTU.md`. Не публикуйте локальную базу и сессии. ИИ-сервисов и их ключей приложение не использует.
 
 ## Лицензии и материалы
 
