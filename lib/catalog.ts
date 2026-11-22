@@ -1,10 +1,12 @@
-export const services = [
+import { applicationServices } from "./service-directory";
+
+const baseServices = [
   {
     id: "enrollment-ru",
     title: "Справка об обучении",
     language: "На русском языке",
     description: "Для работы, банка или по месту требования",
-    term: "До 15 минут онлайн",
+    term: "Мгновенно в электронном виде",
     automatic: true,
     icon: "file",
     fields: ["organization"],
@@ -14,10 +16,10 @@ export const services = [
     title: "Справка об обучении",
     language: "На английском языке",
     description: "Подтверждение обучения для зарубежных организаций",
-    term: "До 3 рабочих дней",
-    automatic: false,
+    term: "Мгновенно в электронном виде",
+    automatic: true,
     icon: "globe",
-    fields: ["latinName", "phone", "organization"],
+    fields: ["latinName", "organization"],
   },
   {
     id: "grades-ru",
@@ -50,6 +52,40 @@ export const services = [
     fields: ["latinName", "phone"],
   },
   {
+    id: "study-period",
+    title: "Справка о периоде обучения",
+    language: "На русском языке",
+    description: "Подтверждает даты и результаты обучения, например, при переводе",
+    term: "До 3 рабочих дней в демо",
+    automatic: false,
+    icon: "book",
+    fields: ["organization"],
+  },
+  {
+    id: "tuition-payment",
+    title: "Справка об оплате обучения",
+    language: "На русском языке",
+    description: "Показывает учтённую оплату за 2025/2026 учебный год",
+    category: "finance",
+    department: "Бухгалтерия",
+    term: "До 3 рабочих дней в демо",
+    automatic: false,
+    icon: "file",
+    fields: ["organization"],
+  },
+  {
+    id: "scholarship-amount",
+    title: "Справка о размере стипендии",
+    language: "На русском языке",
+    description: "Показывает начисления за сентябрь — ноябрь 2025 года",
+    category: "finance",
+    department: "Бухгалтерия",
+    term: "До 3 рабочих дней в демо",
+    automatic: false,
+    icon: "file",
+    fields: ["organization"],
+  },
+  {
     id: "question",
     title: "Обращение в сервисный центр",
     language: "Вопрос и ответ сотрудника",
@@ -59,7 +95,52 @@ export const services = [
     icon: "message",
     fields: ["topic", "message"],
   },
+  {
+    id: "feedback",
+    title: "Сообщение о проблеме",
+    language: "Обратная связь",
+    description: "Обращение к координатору сервисного центра",
+    automatic: false,
+    icon: "message",
+    fields: ["feedbackReason", "message"],
+  },
 ] as const;
+type BaseService = (typeof baseServices)[number];
+export type DocumentService = Exclude<
+  BaseService,
+  { id: "question" | "feedback" }
+>;
+export const services = [
+  ...baseServices,
+  ...applicationServices.map((service) => ({
+    ...service,
+    language: "Первичный запрос",
+    automatic: false,
+    fields: [],
+  })),
+] as const;
+
+export function isDocumentService(id: string) {
+  return baseServices.some(
+    (service) =>
+      service.id === id &&
+      service.id !== "question" &&
+      service.id !== "feedback",
+  );
+}
+
+export const feedbackDepartment = "Координатор сервисного центра";
+export const feedbackReasons = [
+  { id: "delay", label: "Задержка или пропущенный срок" },
+  { id: "quality", label: "Ошибка в документе или ответе" },
+  { id: "communication", label: "Сложности в общении" },
+  { id: "technical", label: "Техническая проблема" },
+  { id: "academic", label: "Проблема в учебном процессе" },
+  { id: "campus", label: "Проблема на кампусе" },
+  { id: "suggestion", label: "Предложение по улучшению" },
+  { id: "other", label: "Другое" },
+] as const;
+
 export const topics = [
   {
     id: "documents",
@@ -69,7 +150,7 @@ export const topics = [
   {
     id: "academic",
     label: "Учебный процесс",
-    department: "Учебный офис филиала",
+    department: "Учебный офис",
   },
   {
     id: "mobility",
@@ -77,6 +158,7 @@ export const topics = [
     department: "Международный отдел",
   },
   { id: "finance", label: "Оплата и договор", department: "Договорной отдел" },
+  { id: "library", label: "Библиотека и электронные ресурсы", department: "Библиотека" },
   {
     id: "technical",
     label: "Доступ в учебные системы",
@@ -89,9 +171,12 @@ export const statuses: Record<string, string> = {
   working: "В работе",
   needs_info: "Нужен ваш ответ",
   ready: "Готово",
+  issued: "Выдано",
   cancelled: "Отменена",
 };
 export type Student = {
+  timetable_group?: string | null;
+  language_stream?: string | null;
   id: string;
   role: string;
   name: string;
@@ -124,9 +209,14 @@ export type Case = {
   topic?: string;
   message?: string;
   department?: string;
+  related_request_id?: string | null;
+  evidence?: { name: string; mediaType: string; byteSize: number } | null;
   status: string;
   created_at: string;
   due_at: string;
+  ready_at?: string | null;
+  issued_at?: string | null;
+  cancelled_at?: string | null;
   student_name?: string;
   student_group?: string;
   events?: CaseEvent[];
@@ -138,6 +228,9 @@ export type CaseEvent = {
   created_at: string;
 };
 export type Lesson = {
+  slot?: number;
+  stream?: string;
+  location?: string;
   id: string;
   day: number;
   start: string;
@@ -149,6 +242,8 @@ export type Lesson = {
   teacher: string;
   change?: string;
   oldRoom?: string;
+  oldRoomId?: string;
+  changeDate?: string;
 };
 export type Notice = {
   id: string;
@@ -158,9 +253,21 @@ export type Notice = {
   date: string;
   read: boolean;
   link?: string;
+  lessonDate?: string;
+  lessonId?: string;
   requestId?: string;
   actionLabel?: string;
+  audience?: string;
 };
+export type Announcement = {
+  id: string;
+  audience: string;
+  title: string;
+  message: string;
+  published_at: string;
+  withdrawn_at: string | null;
+};
+export type AnnouncementBoard = { groups: string[]; messages: Announcement[] };
 export function dateLabel(value: string, time = false) {
   return new Intl.DateTimeFormat("ru-RU", {
     day: "numeric",

@@ -103,31 +103,21 @@
 }
 .indoor-location-controls {
   display: flex;
-  gap: 16px;
-  align-items: flex-end;
-  padding: 14px 26px 18px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 26px 14px;
   flex-shrink: 0;
 }
-.indoor-location-controls .segmented {
-  margin-right: auto;
-  min-height: 40px;
-}
-.indoor-location-controls .segmented button {
-  min-height: 36px;
-}
-.indoor-location-controls > label {
-  width: 210px;
-}
-.indoor-location-controls > label > span {
-  display: block;
-  font-size: 10px;
-  color: var(--muted);
-  margin: 0 0 5px 2px;
-}
 .indoor-location-controls select {
-  min-height: 40px;
-  padding: 9px 10px;
-  font-size: 12px;
+  width: 115px;
+  min-height: 42px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.indoor-svg [data-map-floor],
+.indoor-plan-label {
+  cursor: pointer;
 }
 .indoor-map-area {
   flex: 1;
@@ -221,17 +211,7 @@
   color: var(--muted);
   margin-top: 3px;
 }
-.indoor-focus {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--blue);
-  background: var(--blue-light);
-  border-radius: 7px;
-  padding: 9px 12px;
-  min-height: 40px;
-  font-size: 12px;
-}
+
 .indoor-source {
   display: flex;
   justify-content: flex-end;
@@ -240,11 +220,6 @@
   margin-top: 13px;
   color: #8b94a5;
   font-size: 10px;
-}
-.indoor-source > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
 }
 .indoor-source small {
   font-size: 10px;
@@ -337,31 +312,7 @@
   color: var(--muted);
   font-size: 12px;
 }
-.room-current {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 11px;
-  padding: 10px 16px;
-  background: #f7f8fb;
-}
-.room-current small {
-  display: block;
-  font-size: 10px;
-  opacity: 0.8;
-  margin-top: 2px;
-}
-.room-current-free {
-  background: #effaf3;
-  color: #267348;
-}
-.room-current-busy {
-  background: #fff4e8;
-  color: #956324;
-}
-.room-current svg {
-  margin-top: 2px;
-}
+
 .room-calendar-periods {
   overflow: auto;
   flex: 1;
@@ -387,14 +338,8 @@
   margin-top: 2px;
 }
 .room-period > div {
-  border-left: 3px solid;
+  border-left: 3px solid #b4ccef;
   padding-left: 11px;
-}
-.room-period-free > div {
-  border-color: #73b58d;
-}
-.room-period-busy > div {
-  border-color: #e8b268;
 }
 .room-period strong {
   display: block;
@@ -405,6 +350,60 @@
   color: var(--muted);
   font-size: 10px;
   margin-top: 2px;
+}
+.availability-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px 16px;
+}
+.availability-form label {
+  min-width: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.availability-form input,
+.availability-form select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  margin-top: 5px;
+  padding: 8px;
+  font-size: 14px;
+}
+.availability-form > button {
+  grid-column: 1 / -1;
+}
+.availability-results > p {
+  padding: 12px 16px 8px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+}
+.availability-results small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+.availability-results > button {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 16px;
+  text-align: left;
+  border-bottom: 1px solid #f0f2f6;
+  font-size: 13px;
+}
+.availability-results > button:hover {
+  background: var(--blue-light);
+}
+.availability-results svg {
+  color: var(--blue);
+  flex-shrink: 0;
 }
 .indoor-state {
   display: flex;
@@ -445,14 +444,11 @@ button.room:hover {
 }
 @media (max-width: 700px) {
   .indoor-calendar-button {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    justify-content: center;
-    padding: 8px;
+    min-height: 44px;
+    padding: 8px 10px;
   }
-  .indoor-calendar-button > span {
-    display: none;
+  .indoor-calendar-button svg {
+    flex-shrink: 0;
   }
   .room-calendar {
     width: 100%;
@@ -487,25 +483,17 @@ button.room:hover {
     font-size: 13px;
   }
   .indoor-location-controls {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 10px;
-    padding: 12px 16px 14px;
-  }
-  .indoor-location-controls .segmented {
-    grid-column: 1 / -1;
-    margin-right: 0;
-  }
-  .indoor-location-controls .segmented button {
-    flex: 1;
-  }
-  .indoor-location-controls > label {
-    width: auto;
-    min-width: 0;
+    padding: 10px 16px 12px;
+    gap: 8px;
   }
   .indoor-location-controls select {
-    width: 100%;
-    font-size: 12px;
+    width: 105px;
+    min-height: 44px;
+  }
+  .room-calendar-date input,
+  .availability-form input,
+  .availability-form select {
+    font-size: 16px;
   }
   .indoor-map-area {
     min-height: 180px;
@@ -535,21 +523,10 @@ button.room:hover {
   .indoor-selected p {
     font-size: 10px;
   }
-  .indoor-focus {
-    font-size: 0;
-    min-width: 40px;
-    padding: 10px;
-  }
-  .indoor-focus svg {
-    width: 19px;
-    height: 19px;
-  }
+
   .indoor-source {
     margin-top: 10px;
     justify-content: flex-end;
-  }
-  .indoor-source > span {
-    display: none;
   }
   .indoor-source small {
     font-size: 9px;

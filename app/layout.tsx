@@ -4,9 +4,12 @@ import "./service-center.css";
 import "./sidebar.css";
 import "./employees.css";
 import "./campus-map.css";
+import "./study-hub.css";
+import "./room-availability.css";
+import "./office.css";
 
 export const metadata: Metadata = {
-  title: "Студент — центр сервиса МГИМО",
+  title: "Студент — личный кабинет МГИМО",
   description:
     "Расписание, успеваемость и справки в одном месте. Учебный прототип.",
   icons: {

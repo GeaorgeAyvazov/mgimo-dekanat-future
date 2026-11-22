@@ -108,7 +108,7 @@
         "styles.json": "ad129bb6c0c9dac6c7f8dc48a31c1d1b0e4e5df65cc8c31b574f788dd192876a"
       },
       "public_svg": "/maps/floors/a2.svg",
-      "public_svg_sha256": "416027c2192d5ec782b05dd163ba950344a47eb13a257ddb2ffe4530f977da26",
+      "public_svg_sha256": "968e3aed6bd65134380a9d5bb7fd6de5d06abbccd52710e2c3c81e46f668aa4b",
       "rooms": 23
     },
     {
@@ -136,7 +136,7 @@
         "styles.json": "a84be56be1e006187169557db7c0d430d36b89515ba74dab90929f3ced862660"
       },
       "public_svg": "/maps/floors/b1.svg",
-      "public_svg_sha256": "196d9e49f10e29bb1830da539730a0345d480dc34802ff7729dbcbebebab9beb",
+      "public_svg_sha256": "59922e995d626607ecaa38c83f9696e0005dd221d0888d6a88375743280c5976",
       "rooms": 78
     },
     {
@@ -150,7 +150,7 @@
         "styles.json": "475311409f700f840a3b723735f1feb074dc503cba9a58e96d1dfdad60773ea9"
       },
       "public_svg": "/maps/floors/b2.svg",
-      "public_svg_sha256": "0f54d5b1461b8893046e941018ea82e0b295e2469d22fd7cce5b753f66577e40",
+      "public_svg_sha256": "500c84463fac7d9b6824494203dc347570113ef9a95527dba168cc7d2533d067",
       "rooms": 73
     },
     {
@@ -164,7 +164,7 @@
         "styles.json": "d2d70d0e0f7e88b085e8015409afed610d4b1a50394c87bddd03d51e1df7b990"
       },
       "public_svg": "/maps/floors/b3.svg",
-      "public_svg_sha256": "614078ed50335c312342ad5be60408b37a33561085770dee2fb35f312b65a416",
+      "public_svg_sha256": "040ba275307b51cf1082ce3d906a2a0b886dafadb1e201771112cbfdcdef3514",
       "rooms": 75
     },
     {
@@ -178,7 +178,7 @@
         "styles.json": "c9fbe9432341fff642bad8efa7dd6f86a315be4617f0fc92904803a4450dbbc3"
       },
       "public_svg": "/maps/floors/b4.svg",
-      "public_svg_sha256": "1d160324b8ed7a4a316a4c1113ef307e1102724584e3fdae62da30fe30b7a931",
+      "public_svg_sha256": "20a2fa264f0e727f1b9e0df165cef65b1c57d10015c4929c307d7b3f3ce6bde1",
       "rooms": 72
     },
     {
@@ -220,7 +220,7 @@
         "styles.json": "a49782e07f525afb43079c0342c281f2a5eb4026ab15a3fa6d8243d6e0a436cf"
       },
       "public_svg": "/maps/floors/v2.svg",
-      "public_svg_sha256": "f573128e130ddee507f10fd7287d600a8ae458443c456901b73cd895e17c9219",
+      "public_svg_sha256": "381ce758511e06d04accecc7080c94c289372443b2431346be3c543781f8da20",
       "rooms": 74
     },
     {
@@ -234,7 +234,7 @@
         "styles.json": "39c1edf96f99450cd058c6746f60c61374118654c411611d0aa3832551084aef"
       },
       "public_svg": "/maps/floors/v3.svg",
-      "public_svg_sha256": "4e95383989725999f6fc7fc058e085c204e28e39df481885fc43e68ef683af66",
+      "public_svg_sha256": "71d0179e69aa71fb8c5b1145971c874af885aee720fa988c3d8dea7dd305d141",
       "rooms": 55
     },
     {
@@ -248,7 +248,7 @@
         "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
       },
       "public_svg": "/maps/floors/v4.svg",
-      "public_svg_sha256": "ea88393505cc8bea009d5fb2cbd469f4d8ff1f184d544e5ec5d72fc622dc53c7",
+      "public_svg_sha256": "41d1be0ff47b3f89774a23974acbd020bf7e9b79d3fc80f89d369e7c5eaa6254",
       "rooms": 44
     },
     {
@@ -262,7 +262,7 @@
         "styles.json": "542865445e5aa7d0e55a91ccb1ef8583d8e36b372278de3e127cb13f473c5256"
       },
       "public_svg": "/maps/floors/g0.svg",
-      "public_svg_sha256": "1642a8d207cec90383a0708e3edf5dbe12a0b194bd345502ef0a6288f48e576e",
+      "public_svg_sha256": "c1ca7db3312980331def730687a76f48c1c427717adc6366a5fddfe60731bfb5",
       "rooms": 68
     },
     {
@@ -290,7 +290,7 @@
         "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
       },
       "public_svg": "/maps/floors/g2.svg",
-      "public_svg_sha256": "1e0f78a0a8ec916a9cfdc4a398aef83ee996794ba24f4f400b86016a091682dc",
+      "public_svg_sha256": "822a80d8c55002701c3f4b5466f9b6dc56ac7e34977db0362f7edc0effd3076b",
       "rooms": 79
     },
     {
@@ -402,7 +402,7 @@
         "styles.json": "35f6a2d7f734fe1062f873339c5e5579c5c130b5690aff0785b9e9df36b533bc"
       },
       "public_svg": "/maps/floors/n4.svg",
-      "public_svg_sha256": "3d7dea64625724fbc8fd59bd2dd9a1b3a975ce19bde6ddec5241fcc31f38ddae",
+      "public_svg_sha256": "b365dfa6a2dbb23cdea0798ca156d33ddabf39ed9c0b3ba65c51e4a537a42811",
       "rooms": 53
     },
     {
@@ -444,7 +444,7 @@
         "styles.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
       },
       "public_svg": "/maps/floors/l1.svg",
-      "public_svg_sha256": "f942eb3c6125c6aa65510cf4189ed4a4fe327e5282e9343778f9c110ad8fba3c",
+      "public_svg_sha256": "eceeab2f314a6ce148ad7c58472e8e70c06188edc4ff349a449e1e60d0e41066",
       "rooms": 14
     },
     {

@@ -1,12 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  LoaderCircle,
-  X,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, LoaderCircle, X } from "lucide-react";
 import {
   addCalendarDays,
   moscowDate,
@@ -16,59 +10,54 @@ import {
 export function RoomCalendar({
   roomKey,
   roomName,
+  date,
+  setDate,
   close,
 }: {
   roomKey: string;
   roomName: string;
+  date: string;
+  setDate: (value: string) => void;
   close: () => void;
 }) {
   const today = moscowDate();
-  const [date, setDate] = useState(today);
   const [data, setData] = useState<RoomCalendarDay | null>(null);
   const [error, setError] = useState("");
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (document.visibilityState === "visible") setTick((value) => value + 1);
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
+  const [retry, setRetry] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     setData(null);
     setError("");
-    fetch(
-      `/api/portal/room-calendar?room=${encodeURIComponent(roomKey)}&date=${date}`,
-      { credentials: "same-origin", signal: controller.signal },
-    )
+    const params = new URLSearchParams({ room: roomKey, date });
+    fetch(`/api/portal/room-calendar?${params}`, { signal: controller.signal })
       .then(async (response) => {
         const result = (await response.json()) as RoomCalendarDay & {
           error?: string;
         };
         if (!response.ok)
-          throw new Error(result.error || "Не удалось загрузить занятость");
+          throw new Error(result.error || "Не удалось загрузить расписание");
         if (!controller.signal.aborted) setData(result);
       })
       .catch((reason) => {
         if (!controller.signal.aborted) setError(reason.message);
       });
     return () => controller.abort();
-  }, [roomKey, date, tick]);
-  const badge = data?.current?.state;
+  }, [roomKey, date, retry]);
+
   return (
     <section
       id="room-calendar-pane"
       className="room-calendar"
-      aria-label={`Занятость аудитории ${roomName}`}
+      aria-label={`Расписание аудитории ${roomName}`}
     >
       <header>
         <div>
           <h3>Аудитория {roomName}</h3>
-          <p>Занятость на день</p>
+          <p>Расписание на день</p>
         </div>
         <button
           className="icon-btn"
-          aria-label="Закрыть занятость аудитории"
+          aria-label="Закрыть расписание аудитории"
           onClick={close}
         >
           <X size={19} />
@@ -77,7 +66,7 @@ export function RoomCalendar({
       <div className="room-calendar-date">
         <button
           className="icon-btn"
-          aria-label="Предыдущий день занятости"
+          aria-label="Предыдущий день"
           disabled={date <= addCalendarDays(today, -90)}
           onClick={() => setDate(addCalendarDays(date, -1))}
         >
@@ -85,7 +74,7 @@ export function RoomCalendar({
         </button>
         <input
           type="date"
-          aria-label="Дата занятости аудитории"
+          aria-label="Дата расписания аудитории"
           value={date}
           min={addCalendarDays(today, -90)}
           max={addCalendarDays(today, 90)}
@@ -95,7 +84,7 @@ export function RoomCalendar({
         />
         <button
           className="icon-btn"
-          aria-label="Следующий день занятости"
+          aria-label="Следующий день"
           disabled={date >= addCalendarDays(today, 90)}
           onClick={() => setDate(addCalendarDays(date, 1))}
         >
@@ -111,7 +100,7 @@ export function RoomCalendar({
           <p role="alert">{error}</p>
           <button
             className="button secondary"
-            onClick={() => setTick(tick + 1)}
+            onClick={() => setRetry(retry + 1)}
           >
             Повторить
           </button>
@@ -121,50 +110,25 @@ export function RoomCalendar({
           <LoaderCircle className="spin" size={23} />
           Загружаем расписание…
         </div>
+      ) : !data.lessons.length ? (
+        <p className="room-calendar-state" role="status">
+          На этот день занятий нет
+        </p>
       ) : (
-        <>
-          {badge && (
-            <div className={`room-current room-current-${badge}`} role="status">
-              <Clock3 size={17} />
-              <span>
-                {badge === "closed"
-                  ? "Вне учебного дня"
-                  : badge === "busy"
-                    ? "Сейчас занята по расписанию"
-                    : "Сейчас свободна по расписанию"}
-                {data.current?.until && (
-                  <small>
-                    {badge === "busy" ? "Освободится в" : "Свободна до"}{" "}
-                    {data.current.until}
-                  </small>
-                )}
-              </span>
-            </div>
-          )}
-          <div className="room-calendar-periods">
-            {data.intervals.map((period) => (
-              <div
-                className={`room-period room-period-${period.state}`}
-                key={period.start}
-              >
-                <time>
-                  {period.start}
-                  <span>— {period.end}</span>
-                </time>
-                <div>
-                  <strong>
-                    {period.state === "busy" ? "Занято" : "Свободно"}
-                  </strong>
-                  <small>
-                    {period.state === "busy"
-                      ? "Учебное занятие"
-                      : "Свободное окно"}
-                  </small>
-                </div>
+        <div className="room-calendar-periods">
+          {data.lessons.map((lesson) => (
+            <div className="room-period" key={lesson.start}>
+              <time>
+                {lesson.start}
+                <span>— {lesson.end}</span>
+              </time>
+              <div>
+                <strong>{lesson.subject}</strong>
+                <small>Группа {lesson.group}</small>
               </div>
-            ))}
-          </div>
-        </>
+            </div>
+          ))}
+        </div>
       )}
     </section>
   );

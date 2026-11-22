@@ -1,0 +1,1 @@
+ALTER TABLE `requests` ADD `related_request_id` text REFERENCES requests(id);

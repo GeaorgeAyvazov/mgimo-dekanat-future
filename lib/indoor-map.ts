@@ -28,10 +28,11 @@ export const campusViewBox: MapFloor["viewBox"] = [0, 0, 378.74864, 160.99349];
 export function constrainCamera(
   camera: Camera,
   viewBox: MapFloor["viewBox"],
+  maxZoom = 8,
 ): Camera {
   const [x, y, width, height] = viewBox;
   const zoom = Math.min(
-    8,
+    maxZoom,
     Math.max(1, Number.isFinite(camera.zoom) ? camera.zoom : 1),
   );
   const halfWidth = width / zoom / 2,

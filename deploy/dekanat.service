@@ -1,0 +1,24 @@
+[Unit]
+Description=MGIMO student portal (contest edition)
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+WorkingDirectory=/opt/dekanat
+StateDirectory=dekanat
+StateDirectoryMode=0700
+Environment=DATA_DIR=/var/lib/dekanat
+Environment=PORT=8787
+EnvironmentFile=/etc/dekanat.env
+ExecStart=/usr/bin/env node /opt/dekanat/server.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

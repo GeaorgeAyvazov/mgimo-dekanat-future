@@ -132,6 +132,8 @@ export const demoUsers = [
   },
 ];
 export function lessons(userId: string): Lesson[] {
+  const student = demoUsers.find((user) => user.id === userId && user.role === "student");
+  if (!student) return [];
   const a = userId === "student-alina";
   const titles = a
     ? [
@@ -199,7 +201,7 @@ export function lessons(userId: string): Lesson[] {
       const actualRoom = changed ? (a ? "3018" : "2009") : originalRoom;
       const actualFloor = changed ? (a ? "b3" : "b2") : a ? "b2" : "b3";
       return {
-        id: `${userId}-${day}-${slot}`,
+        id: `${student.group}-${day}-${slot}`,
         day,
         start: ["09:00", "10:40", "13:00"][slot],
         end: ["10:20", "12:00", "14:20"][slot],
@@ -209,7 +211,8 @@ export function lessons(userId: string): Lesson[] {
         room: actualRoom,
         roomId: `${actualFloor}:${actualRoom}`,
         ...(changed
-          ? { change: "Изменилась аудитория", oldRoom: originalRoom }
+          ? { change: "Изменилась аудитория", changeDate: "2026-11-06",
+              oldRoom: originalRoom, oldRoomId: `${a ? "b2" : "b3"}:${originalRoom}` }
           : {}),
       };
     }),
@@ -217,15 +220,19 @@ export function lessons(userId: string): Lesson[] {
 }
 export function notices(userId: string): Omit<Notice, "read">[] {
   const date = "2026-11-05T09:00:00.000Z";
+  const changed = lessons(userId).find((lesson) => lesson.changeDate);
   return [
-    {
+    ...(changed ? [{
       id: "room-change",
-      title: "Новая аудитория в пятницу",
-      text: `Вторая пара пройдёт в ${userId === "student-alina" ? "3018 вместо 2011" : "2009 вместо 3042"}. В расписании уже указана новая аудитория.`,
+      title: "С 6 ноября изменилась аудитория",
+      text: `${changed.subject} по пятницам в ${changed.start} теперь проходит в аудитории ${changed.room}. Прежняя аудитория — ${changed.oldRoom}.`,
       type: "schedule",
       date,
       link: "schedule",
-    },
+      lessonDate: changed.changeDate,
+      lessonId: changed.id,
+      actionLabel: "Показать изменённую пару",
+    }] : []),
     {
       id: "exchange-deadline",
       title: "Заявки на академическую мобильность",

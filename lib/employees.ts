@@ -1,3 +1,5 @@
+import type { PublicContact } from "./public-contacts";
+
 export type Employee = {
   id: string;
   name: string;
@@ -18,6 +20,16 @@ export function normalizeEmployeeSearch(value: string) {
     .replaceAll("ё", "е")
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
+}
+
+export function findPublicContacts(contacts: PublicContact[], query: string, subject = "all") {
+  const words = normalizeEmployeeSearch(query).split(" ").filter(Boolean);
+  return contacts.filter((contact) => {
+    if (subject !== "all" && contact.subject !== subject) return false;
+    const text = normalizeEmployeeSearch([contact.name, contact.subject, contact.detail, contact.keywords,
+      contact.email, ...contact.phones, contact.room].join(" "));
+    return words.every((word) => text.includes(word));
+  });
 }
 
 export function findEmployees(

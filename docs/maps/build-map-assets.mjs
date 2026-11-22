@@ -9,6 +9,7 @@ import ts from 'typescript';
 const inputArg = process.argv.indexOf('--input');
 const evidenceDir = path.resolve(inputArg >= 0 ? process.argv[inputArg + 1] : path.dirname(fileURLToPath(import.meta.url)));
 const projectDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const { pairs, closed } = JSON.parse(await fs.readFile(path.join(projectDir, 'lib/campus-passages.json'), 'utf8'));
 const outputDir = path.join(projectDir, 'public/maps');
 const floorsDir = path.join(outputDir, 'floors');
 const index = JSON.parse(await fs.readFile(path.join(evidenceDir, 'floor-index.json'), 'utf8'));
@@ -93,6 +94,7 @@ def clean(el):
  if 'fontSize' in computed:style['font-family']='Arial, sans-serif'
  room=p['rooms'].get(ident)
  if room and room.get('type') in p['fills'] and ('fill' not in computed or not re.search(r'\bimatype\d+\b',el.attrib.get('class',''))):style['fill']=p['fills'][room['type']]
+ if ident in p['hiddenMarkers']:style['display']='none'
  if style:el.set('style',';'.join(k+':'+v for k,v in style.items()))
  elif 'style' in el.attrib:del el.attrib['style']
 clean(root)
@@ -109,7 +111,7 @@ for e in root.iter():
  else:ids.add(ident)
 labels=0
 for ident,r in p['rooms'].items():
- if ident not in ids or 'rn_'+ident in ids or r.get('type') in {'5','44','11'}:continue
+ if ident not in ids or 'rn_'+ident in ids or 'rn_'+ident in p['hiddenMarkers'] or r.get('type') in {'5','44','11'}:continue
  box=r.get('box')
  if not box:continue
  text=r['name'];size=max(10,min(vb[2]/65,56))
@@ -146,7 +148,12 @@ for (const building of index) for (const floor of building.floors) {
       return [{ id, name:plainName(room.name) || id, type, box }];
     });
     if (!rooms.length) throw new Error('No mapped rooms with valid geometry.');
-    const sanitized = spawnSync(python, ['-X', 'utf8', '-c', sanitizer], { input:JSON.stringify({svg, styles:Object.fromEntries(styles.filter(s=>s.id).map(s=>[s.id,s])), rooms:Object.fromEntries(rooms.map(r=>[r.id,r])), fills}), encoding:'utf8', maxBuffer:12*1024*1024 });
+    const onFloor = (keys) => keys.filter(id => id.startsWith(key+':')).map(id => id.slice(key.length+1));
+    const hiddenMarkers = [
+      ...onFloor(pairs.flatMap(({from, to}) => [from, to]).concat(closed)).map(id => 'rn_'+id),
+      ...onFloor(closed),
+    ];
+    const sanitized = spawnSync(python, ['-X', 'utf8', '-c', sanitizer], { input:JSON.stringify({svg, styles:Object.fromEntries(styles.filter(s=>s.id).map(s=>[s.id,s])), rooms:Object.fromEntries(rooms.map(r=>[r.id,r])), fills, hiddenMarkers}), encoding:'utf8', maxBuffer:12*1024*1024 });
     if (sanitized.error) throw sanitized.error;
     if (sanitized.status!==0) throw new Error('SVG sanitizer failed: '+sanitized.stderr.slice(-500));
     const clean = JSON.parse(sanitized.stdout), ids = new Set(clean.ids);

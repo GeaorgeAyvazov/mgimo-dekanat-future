@@ -1,27 +1,42 @@
 "use client";
+import { GradeOverview } from "@/components/grade-overview";
+import { DocumentVerification } from "@/components/document-verification";
+import { OfficeReport } from "@/components/office-report";
+import { OfficeAnnouncements } from "@/components/office-announcements";
+import { FeedbackForm } from "@/components/feedback-form";
 import { CampusMap } from "@/components/campus-map";
+import { RoomAvailability } from "@/components/room-availability";
+import { StudyHub } from "@/components/study-hub";
+import { LessonDetails, type SelectedLesson } from "@/components/lesson-details";
+import { CalendarExport } from "@/components/calendar-export";
+import { addCalendarDays, mondayOf, moscowClock, moscowDate, validCalendarDate } from "@/lib/room-calendar-types";
+import { lessonOnDate } from "@/lib/lesson-occurrence";
+import { NotificationPopover } from "@/components/notification-popover";
 import { PortalSidebar } from "@/components/portal-sidebar";
 import { EmployeeDirectory } from "@/components/employee-directory";
 import {
   ServiceCenter,
   DocumentWallet,
+  ContactChoice,
   AppealForm,
+  OfficialServiceInfo,
 } from "@/components/service-center";
 import {
   useEffect,
   useState,
   useRef,
+  Fragment,
   type FormEvent,
   type ReactNode,
 } from "react";
 import {
-  FolderOpen,
   UsersRound,
   ArrowUpRight,
   ArrowRight,
   ArrowLeft,
   CalendarDays,
   Clock3,
+  Map as MapIcon,
   MapPin,
   UserRound,
   FileText,
@@ -30,10 +45,8 @@ import {
   GraduationCap,
   ChevronRight,
   ChevronLeft,
-  Search,
   Check,
   CheckCircle2,
-  Plus,
   Download,
   LogOut,
   ShieldCheck,
@@ -56,13 +69,18 @@ import {
   services,
   statuses,
   dateLabel,
+  feedbackReasons,
+  isDocumentService,
   type Service,
+  type DocumentService,
   type Student,
   type Grade,
   type Case,
   type Lesson,
   type Notice,
 } from "@/lib/catalog";
+import { applicationServices, officialServices } from "@/lib/service-directory";
+import { getExamOptions } from "@/lib/request-context";
 type Data = {
   user: Student;
   requests: Case[];
@@ -72,46 +90,59 @@ type Data = {
   favorites: string[];
   today: string;
 };
+type ScheduleGroup = { code: string; course: number; source?: string };
+type GroupWeek = { group: string; week: string; lessons: Lesson[]; streams: string[]; coverage?: { from: string; to: string; capturedOn: string } };
 type View =
   | "today"
   | "schedule"
   | "grades"
+  | "study"
+  | "rooms"
+  | "contact"
   | "services"
   | "profile"
   | "notifications"
   | "case"
   | "order"
   | "staff"
+  | "staff-report"
+  | "announcements"
   | "wallet"
-  | "employees";
+  | "employees"
+  | "map";
 const navigation = [
+  { id: "schedule", label: "Расписание", icon: CalendarDays },
+  { id: "grades", label: "Успеваемость", short: "Оценки", icon: GraduationCap },
+  { id: "study", label: "Учёба", icon: BookOpen },
+  { id: "map", label: "Карта", icon: MapIcon },
+  { id: "rooms", label: "Свободные аудитории", short: "Аудитории", icon: Building2 },
   {
     id: "today",
     label: "Центр сервиса",
-    short: "Сервисы",
+    short: "Сервис",
     icon: LayoutDashboard,
   },
-  { id: "schedule", label: "Расписание", icon: CalendarDays },
-  { id: "grades", label: "Успеваемость", short: "Учёба", icon: GraduationCap },
-  {
-    id: "services",
-    label: "Мои обращения",
-    short: "Заявки",
-    icon: FileText,
-  },
-  {
-    id: "wallet",
-    label: "Мои документы",
-    short: "Документы",
-    icon: FolderOpen,
-  },
-  { id: "employees", label: "Сотрудники", icon: UsersRound },
-  { id: "profile", label: "Мой профиль", short: "Профиль", icon: UserRound },
 ];
+const profileNav = {
+  id: "profile",
+  label: "Мой профиль",
+  short: "Профиль",
+  icon: UserRound,
+};
+const serviceSections = [
+  { id: "today", label: "Услуги" },
+  { id: "services", label: "Обращения" },
+  { id: "wallet", label: "Документы" },
+  { id: "employees", label: "Сотрудники" },
+] as const;
 const titles: Record<string, string> = {
   today: "Центр сервиса",
+  map: "Карта кампуса",
   schedule: "Расписание",
   grades: "Успеваемость",
+  study: "Учёба",
+  rooms: "Свободные аудитории",
+  contact: "Написать в центр сервиса",
   services: "Мои обращения",
   wallet: "Мои документы",
   employees: "Сотрудники",
@@ -120,6 +151,8 @@ const titles: Record<string, string> = {
   case: "Моя заявка",
   order: "Заказать документ",
   staff: "Обращения студентов",
+  "staff-report": "Отчёт по обращениям",
+  announcements: "Объявления деканата",
 };
 const iconMap = {
   file: FileText,
@@ -128,15 +161,17 @@ const iconMap = {
   book: BookOpen,
   award: Award,
   message: MessageCircle,
+  calendar: CalendarDays,
 };
 const DEMO_PASSWORD = "Student2026!";
 async function api<T = Data>(path: string, data?: unknown): Promise<T> {
+  const upload = data instanceof FormData;
   const response = await fetch("/api/portal/" + path, {
     credentials: "same-origin",
     headers: data
-      ? { "Content-Type": "application/json", "X-Dekanat-Request": "1" }
+      ? { ...(!upload && { "Content-Type": "application/json" }), "X-Dekanat-Request": "1" }
       : {},
-    ...(data ? { method: "POST", body: JSON.stringify(data) } : {}),
+    ...(data ? { method: "POST", body: upload ? data : JSON.stringify(data) } : {}),
   });
   const result = (await response.json()) as T & { error?: string };
   if (!response.ok)
@@ -156,7 +191,7 @@ function Logo() {
         <i />
       </span>
       <span>
-        студент<span className="brand-caption">Центр сервиса · МГИМО</span>
+        студент<span className="brand-caption">Личный кабинет · МГИМО</span>
       </span>
     </div>
   );
@@ -232,7 +267,7 @@ function Login({ onLogin }: { onLogin: () => Promise<void> }) {
             <span />
             Учебный прототип
           </span>
-          <h2>Вход в центр сервиса</h2>
+          <h2>Вход в личный кабинет</h2>
           <p className="muted">Введите логин и пароль учебной записи.</p>
           <form onSubmit={submit}>
             <label htmlFor="login">Логин</label>
@@ -326,22 +361,48 @@ export default function Portal() {
   const [data, setData] = useState<Data | null>(null),
     [loading, setLoading] = useState(true),
     [loadError, setLoadError] = useState(""),
-    [view, setView] = useState<View>("today"),
+    [view, setView] = useState<View>("schedule"),
+    [selectedLesson, setSelectedLesson] = useState<SelectedLesson | null>(null),
     [entity, setEntity] = useState(""),
     [toast, setToast] = useState(""),
-    [search, setSearch] = useState(""),
     [selectedDay, setSelectedDay] = useState(-1),
     [week, setWeek] = useState(0),
     [scheduleMode, setScheduleMode] = useState("day"),
+    [otherSchedule, setOtherSchedule] = useState(false),
+    [scheduleGroups, setScheduleGroups] = useState<ScheduleGroup[] | null>(null),
+    [scheduleCourse, setScheduleCourse] = useState(""),
+    [groupCode, setGroupCode] = useState(""),
+    [streamChoice, setStreamChoice] = useState<string | null>(null),
+    [savingSchedule, setSavingSchedule] = useState(false),
+    [groupLessons, setGroupLessons] = useState<GroupWeek | null>(null),
+    [scheduleError, setScheduleError] = useState(""),
+    [scheduleRetry, setScheduleRetry] = useState(0),
     [activeCase, setActiveCase] = useState<Case | null>(null),
     [caseError, setCaseError] = useState(""),
     [caseLoading, setCaseLoading] = useState(false),
     [caseTick, setCaseTick] = useState(0),
     [requestFilter, setRequestFilter] = useState("all"),
-    [mapRoom, setMapRoom] = useState<{ label: string; id?: string } | null>(
-      null,
-    );
+    [requestQuery, setRequestQuery] = useState(""),
+    [requestLimit, setRequestLimit] = useState(20),
+    [roomSearchDate, setRoomSearchDate] = useState(moscowDate),
+    [roomSearchInterval, setRoomSearchInterval] = useState<{ start: string; end: string }>(),
+    [mapRoom, setMapRoom] = useState<{
+      label: string;
+      id?: string;
+      date: string;
+      availableRooms?: string[];
+    } | null>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const caseStatus = view === "case" ? data?.requests.find(r => r.id === entity)?.status : null;
+  const mapReturn = useRef<{ view: View; entity: string } | null>(null);
+  const detailReturn = useRef<{
+    target: string;
+    view: View;
+    entity: string;
+  } | null>(null);
+  const scheduleWeek = data?.today ? addCalendarDays(mondayOf(data.today), week * 7) : "";
+  const officialPersonal = !!data?.user.timetable_group && (view === "study" || (!otherSchedule && !entity));
+  const requestedGroup = officialPersonal ? data?.user.timetable_group || "" : (otherSchedule && view === "schedule" ? groupCode : "");
   async function refresh() {
     try {
       const d = await api("overview");
@@ -379,16 +440,55 @@ export default function Portal() {
     };
   }, []);
   useEffect(() => {
+    if (!otherSchedule || scheduleGroups || data?.user.role !== "student") return;
+    let active = true;
+    api<{ groups: ScheduleGroup[] }>("group-schedule").then(({ groups }) => {
+      if (active) setScheduleGroups(groups);
+    }).catch((error: Error) => { if (active) setScheduleError(error.message); });
+    return () => { active = false; };
+  }, [otherSchedule, scheduleGroups, scheduleRetry, data?.user.role]);
+  useEffect(() => {
+    if (!requestedGroup || !scheduleWeek || data?.user.role !== "student") return;
+    let active = true;
+    const params = new URLSearchParams({ group: requestedGroup, week: scheduleWeek });
+    api<GroupWeek>(`group-schedule?${params}`).then((result) => {
+      if (active) setGroupLessons(result);
+    }).catch((error: Error) => { if (active) setScheduleError(error.message); });
+    return () => { active = false; };
+  }, [requestedGroup, scheduleWeek, scheduleRetry, data?.user.role]);
+  useEffect(() => {
     function read() {
       const [v, id] = location.hash.slice(1).split("/");
-      setView((Object.keys(titles).includes(v) ? v : "today") as View);
+      setSelectedLesson(null);
+      const home = data?.user.role === "staff" ? "staff" : "schedule";
+      setView((Object.hasOwn(titles, v) ? v : home) as View);
       setEntity(id || "");
-      setSearch("");
+      if (v === "schedule" && id && data?.today) {
+        const date = id.split("?")[0];
+        if (validCalendarDate(date)) {
+          const offset = Date.parse(mondayOf(date)) - Date.parse(mondayOf(data.today));
+          setWeek(offset / (7 * 86400000));
+          setSelectedDay((new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7);
+          setScheduleMode("day");
+          setOtherSchedule(false);
+        }
+      }
     }
     queueMicrotask(read);
     window.addEventListener("hashchange", read);
     return () => window.removeEventListener("hashchange", read);
-  }, []);
+  }, [data?.user.role, data?.today]);
+  useEffect(() => {
+    if (view !== "schedule" || !entity || otherSchedule || scheduleMode !== "day") return;
+    const lessonId = new URLSearchParams(entity.split("?")[1]).get("lesson");
+    if (!lessonId) return;
+    const frame = requestAnimationFrame(() => {
+      const card = document.getElementById(`lesson-${lessonId}`);
+      card?.focus({ preventScroll: true });
+      card?.scrollIntoView({ block: "nearest" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [view, entity, otherSchedule, scheduleMode, selectedDay, week, data?.user.id]);
   useEffect(() => {
     const userId = data?.user.id;
     if (!userId) return;
@@ -399,12 +499,16 @@ export default function Portal() {
       inFlight = true;
       try {
         const next = await api("overview");
-        if (alive && next.user.id === userId) {
+        if (alive && next.user.id !== userId) {
+          window.location.reload();
+          return;
+        }
+        if (alive) {
           setData(next);
           setLoadError("");
         }
       } catch (e) {
-        if (alive && (e as { status?: number }).status === 401) setData(null);
+        if (alive && (e as { status?: number }).status === 401) window.location.reload();
       } finally {
         inFlight = false;
       }
@@ -447,15 +551,17 @@ export default function Portal() {
     return () => {
       cancelled = true;
     };
-  }, [view, entity, data?.user.id, caseTick]);
+  }, [view, entity, data?.user.id, caseTick, caseStatus]);
   function go(v: View, id = "") {
+    if (v === "map" && view !== "map") mapReturn.current = { view, entity };
     const hash = `#${v}${id ? "/" + id : ""}`;
+    if ((v === "order" || v === "case") && v !== view && view !== "order")
+      detailReturn.current = { target: hash, view, entity };
     if (location.hash === hash) {
       setView(v);
       setEntity(id);
     } else window.history.pushState(null, "", hash);
     window.dispatchEvent(new HashChangeEvent("hashchange"));
-    setSearch("");
     window.scrollTo({ top: 0, behavior: "instant" });
     requestAnimationFrame(() =>
       mainRef.current?.focus({ preventScroll: true }),
@@ -465,8 +571,25 @@ export default function Portal() {
     try {
       await api("logout", {});
       setData(null);
+      setOtherSchedule(false);
+      setGroupCode("");
+      setSelectedLesson(null);
+      setStreamChoice(null);
+      setScheduleCourse("");
+      setGroupLessons(null);
+      setScheduleError("");
       setActiveCase(null);
-      window.history.replaceState(null, "", "#today");
+      setRequestFilter("all");
+      setRequestQuery("");
+      setRequestLimit(20);
+      setMapRoom(null);
+      detailReturn.current = null;
+      mapReturn.current = null;
+      window.history.replaceState(
+        null,
+        "",
+        location.pathname + location.search,
+      );
       window.dispatchEvent(new HashChangeEvent("hashchange"));
       setToast("");
     } catch (e) {
@@ -480,6 +603,22 @@ export default function Portal() {
     } catch (e) {
       setToast((e as Error).message);
     }
+  }
+  function openLesson(date: string, lessonId: string) {
+    go("schedule", date + "?" + new URLSearchParams({ lesson: lessonId }));
+  }
+  function clearLessonLink() {
+    if (!entity) return;
+    window.history.replaceState(null, "", "#schedule");
+    setEntity("");
+  }
+  function openNotice(notice: Notice) {
+    if (notice.link === "schedule") setOtherSchedule(false);
+    if (!notice.read) void readNotices(notice.id);
+    if (notice.lessonDate && notice.lessonId) openLesson(notice.lessonDate, notice.lessonId);
+    else if (notice.requestId) go("case", notice.requestId);
+    else if (notice.type === "deadline") go("order", "transcript-en");
+    else go((notice.link || "today") as View);
   }
   if (loading)
     return (
@@ -511,7 +650,7 @@ export default function Portal() {
       <Login
         onLogin={async () => {
           const d = await refresh();
-          if (d) go(d.user.role === "staff" ? "staff" : "today");
+          if (d) go(d.user.role === "staff" ? "staff" : view, entity);
         }}
       />
     );
@@ -525,36 +664,109 @@ export default function Portal() {
       .map((s) => s[0])
       .join(""),
     unread = notices.filter((n) => !n.read).length;
-  const dayIndex = (new Date(today + "T12:00:00Z").getUTCDay() + 6) % 7,
-    dayLessons = lessons.filter((l) => l.day === dayIndex),
-    activeRequests = requests.filter(
-      (r) => !["ready", "cancelled"].includes(r.status),
+  const dayIndex = (new Date(today + "T12:00:00Z").getUTCDay() + 6) % 7;
+  const closedStatuses = ["ready", "issued", "cancelled"];
+  const terms = requestQuery.toLocaleLowerCase("ru").trim().split(/\s+/).filter(Boolean);
+  const visibleRequests = requests.filter((request) => {
+    if (terms.length) {
+      const service = services.find(s => s.id === request.service);
+      const words = [request.id, service?.title, request.department, request.student_name, request.student_group]
+        .filter(Boolean).join(" ").toLocaleLowerCase("ru");
+      if (!terms.every(term => words.includes(term))) return false;
+    }
+    if (requestFilter === "all") return true;
+    if (requestFilter === "reply") return request.status === "needs_info";
+    if (requestFilter === "new") return request.status === "created";
+    if (requestFilter === "feedback") return request.service === "feedback";
+    if (requestFilter === "pickup")
+      return request.status === "ready" && request.format === "paper";
+    if (requestFilter === "ready")
+      return ["ready", "issued"].includes(request.status);
+    return !closedStatuses.includes(request.status);
+  });
+  if (staff && requestFilter !== "ready") {
+    visibleRequests.sort(
+      (a, b) =>
+        Number(closedStatuses.includes(a.status)) -
+          Number(closedStatuses.includes(b.status)) ||
+        a.due_at.localeCompare(b.due_at),
     );
-  const scoreGrades = grades.filter((g) => g.score !== null),
-    average = scoreGrades.length
-      ? Math.round(
-          scoreGrades.reduce((a, g) => a + (g.score || 0), 0) /
-            scoreGrades.length,
-        )
-      : 0;
+  }
   const nav = staff
     ? [
         { id: "staff", label: "Обращения", icon: Inbox },
+        { id: "staff-report", label: "Отчёт", icon: ListChecks },
         { id: "employees", label: "Сотрудники", icon: UsersRound },
-        { id: "profile", label: "Мой профиль", icon: UserRound },
+        { id: "map", label: "Карта", icon: MapIcon },
       ]
     : navigation;
   const activeDay = selectedDay < 0 ? dayIndex : selectedDay;
-  const selectedService = services.find((s) => s.id === entity.split("?")[0]);
-  const weekStart = new Date(today + "T12:00:00Z");
-  weekStart.setUTCDate(weekStart.getUTCDate() - dayIndex + week * 7);
+  const activeGroup = requestedGroup && groupLessons?.group === requestedGroup && groupLessons.week === scheduleWeek ? groupLessons : null;
+  const streams = activeGroup?.streams || [];
+  const previousStream = requestedGroup === user.timetable_group ? user.language_stream : "";
+  const selectedStream = officialPersonal ? previousStream : streamChoice ?? (previousStream || streams.find(s => s.startsWith("27-")) || streams[0]);
+  const displayedLessons = otherSchedule || officialPersonal ? (activeGroup?.lessons || []).filter(l =>
+    !selectedStream || !streams.includes(l.stream || "") || l.stream === selectedStream) : lessons.map(
+    (lesson) => lessonOnDate(lesson, addCalendarDays(scheduleWeek, lesson.day)),
+  );
+  const selectedLessons = displayedLessons.filter((lesson) => lesson.day === activeDay);
+  const nowClock = moscowClock();
+  const nextToday = week === 0 && displayedLessons.find((lesson) => lesson.day === dayIndex && lesson.end > nowClock);
+  const otherGroups = (scheduleGroups || []).filter(({ code }) => code !== user.student_group);
+  const availableCourses = [...new Set(otherGroups.map(({ course }) => course))].sort();
+  const scheduleName = otherSchedule || officialPersonal ? requestedGroup : user.student_group;
+  const canShowSchedule = (!otherSchedule && !officialPersonal) || !!activeGroup;
+  const coverage = activeGroup?.coverage;
+  const missingWeek = coverage && (scheduleWeek < coverage.from || scheduleWeek > coverage.to);
+  const nextClassDay = Array.from(
+    { length: 7 },
+    (_, i) => activeDay + i + 1,
+  ).find((day) => displayedLessons.some((lesson) => lesson.day === day % 7));
+  const [serviceId, serviceQuery] = entity.split("?");
+  const selectedService = services.find((s) => s.id === serviceId);
+  const officialService = officialServices.find((s) => s.id === serviceId);
+  const orderParams = new URLSearchParams(serviceQuery);
+  const relatedId = orderParams.get("request");
+  const feedbackSource =
+    selectedService?.id === "feedback" && relatedId
+      ? requests.find(
+          (request) =>
+            request.id === relatedId && request.service !== "feedback",
+        )
+      : undefined;
+  const visitAbout =
+    serviceId === "visit-request"
+      ? applicationServices.find(
+          (s) => s.id !== "visit-request" && s.id === orderParams.get("about"),
+        )
+      : undefined;
+  const weekStart = new Date(scheduleWeek + "T12:00:00Z");
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
     d.setUTCDate(d.getUTCDate() + i);
     return d;
   });
+  const calendarParams = new URLSearchParams({ week: scheduleWeek });
+  if (requestedGroup) calendarParams.set("group", requestedGroup);
+  else calendarParams.set("scope", "demo");
+  if (selectedStream) calendarParams.set("stream", selectedStream);
+  async function saveSchedule(group: string, stream: string) {
+    setSavingSchedule(true);
+    try {
+      await api("my-schedule", { group, stream });
+      await refresh();
+      clearLessonLink();
+      setOtherSchedule(false);
+      setStreamChoice(null);
+      setToast(group ? "Моё расписание сохранено" : "Восстановлено расписание профиля");
+    } catch (e) { setToast((e as Error).message); }
+    finally { setSavingSchedule(false); }
+  }
   function requestCard(r: Case) {
     const s = services.find((s) => s.id === r.service)!;
+    const document = isDocumentService(r.service);
+    const waiting = !closedStatuses.includes(r.status);
+    const overdue = waiting && Date.parse(r.due_at) < Date.now();
     return (
       <button
         className="request-row"
@@ -566,33 +778,57 @@ export default function Portal() {
           <strong>{s.title}</strong>
           <span>
             {staff ? `${r.student_name} · ${r.student_group}` : s.language}
-            <span className="dot-divider">·</span>
-            {r.service === "question"
-              ? "Обращение"
-              : r.format === "electronic"
-                ? "Электронная"
-                : "Бумажная"}
+            {(document || staff) && (
+              <>
+                <span className="dot-divider">·</span>
+                {document
+                  ? r.format === "electronic"
+                    ? "Электронная"
+                    : "Бумажная"
+                  : s.language}
+              </>
+            )}
           </span>
           <small>
             От {dateLabel(r.created_at)} · № {r.id.slice(-8).toUpperCase()}
           </small>
+          {staff && waiting && (
+            <small className={overdue ? "request-overdue" : undefined}>
+              {overdue ? "Просрочено" : "Срок"} · {dateLabel(r.due_at, true)}{" "}
+              (МСК)
+            </small>
+          )}
         </span>
         <Status
           value={r.status}
           label={
-            r.service === "question" && r.status === "ready"
-              ? "Решено"
-              : undefined
+            !document && r.status === "ready"
+              ? r.service === "question"
+                ? "Решено"
+                : "Ответ получен"
+              : document && r.status === "ready" && r.format === "paper"
+                ? "К выдаче"
+                : undefined
           }
         />
         <ChevronRight size={18} className="muted" />
       </button>
     );
   }
-  function lessonCard(l: Lesson, i: number) {
+  function lessonCard(l: Lesson, i: number, dayLessons: Lesson[]) {
+    const next = dayLessons[i + 1];
+    const asMinutes = (time: string) => {
+      const [hour, minute] = time.split(":").map(Number);
+      return hour * 60 + minute;
+    };
+    const gap = next ? asMinutes(next.start) - asMinutes(l.end) : 0;
+    const lessonDate = weekDays[l.day].toISOString().slice(0, 10);
+    const canSearchRooms = lessonDate >= addCalendarDays(today, -90) && lessonDate <= addCalendarDays(today, 90);
     return (
+      <Fragment key={l.id}>
       <div
-        key={l.id}
+        id={`lesson-${l.id}`}
+        tabIndex={-1}
         className={`lesson lesson-${l.kind === "Лекция" ? "lecture" : "seminar"} ${l.change ? "lesson-changed" : ""}`}
       >
         <div className="lesson-time">
@@ -601,44 +837,99 @@ export default function Portal() {
         </div>
         <div className="lesson-line" />
         <div className="lesson-main">
-          <span className="lesson-kind">
-            {l.kind}
-            <span> {i + 1} пара</span>
-          </span>
-          <h3>{l.subject}</h3>
-          <p>
+          <div className="lesson-kind">
+            <span className="lesson-type">{l.kind}</span>
+            <span className="lesson-slot">{l.slot ?? i + 1} пара</span>
+            {nextToday && nextToday.id === l.id && (
+              <strong className="lesson-now">{l.start <= nowClock ? "Идёт сейчас" : "Ближайшая"}</strong>
+            )}
+          </div>
+          <h3>
+            <button className="lesson-subject-link" aria-haspopup="dialog" onClick={() => setSelectedLesson({lesson: l, date: lessonDate, group: scheduleName})}>
+              {l.subject} <ChevronRight size={15} aria-hidden="true" />
+            </button>
+          </h3>
+          {l.teacher && <p>
             <UserRound size={14} />
             {l.teacher}
-          </p>
+          </p>}
+          {l.stream && l.stream !== scheduleName && <p>{l.stream}</p>}
+          {l.location && <p>{l.location}</p>}
           {l.change && (
             <div className="change-note">
               <RefreshCw size={13} />
-              {l.change}: <s>{l.oldRoom}</s>
-              <ArrowRight size={12} />
-              <b>{l.room}</b>
+              {l.change} · ранее {l.oldRoom}
             </div>
           )}
         </div>
-        <button
+        {(!l.location || l.roomId) && <button
           className="room"
-          onClick={() => setMapRoom({ label: l.room, id: l.roomId })}
+          onClick={() =>
+            setMapRoom({
+              label: l.room,
+              id: l.roomId,
+              date: lessonDate,
+            })
+          }
           aria-label={`Открыть карту МГИМО, аудитория ${l.room}`}
           title="Показать карту кампуса"
         >
           <MapPin size={14} />
           {l.room}
-        </button>
+        </button>}
       </div>
+      {next && gap >= 30 && canSearchRooms && (
+        <button className="schedule-gap" onClick={() => {
+          setRoomSearchDate(lessonDate);
+          setRoomSearchInterval({ start: l.end, end: next.start });
+          go("rooms");
+        }}>
+          <Clock3 size={16} aria-hidden="true" />
+          <span>Окно {l.end}–{next.start}</span>
+          <strong>Найти аудиторию</strong>
+        </button>
+      )}
+      </Fragment>
     );
   }
-  const currentNav = view === "case" || view === "order" ? "services" : view;
+  const serviceSection = serviceSections.find((item) => item.id === view);
+  const inServiceCenter = serviceSection || ["case", "order", "contact"].includes(view);
+  const showServiceNavigation =
+    !staff && serviceSection && !(view === "employees" && entity);
+  const currentNav =
+    staff && ["services", "case", "announcements"].includes(view)
+      ? "staff"
+      : !staff && inServiceCenter
+        ? "today"
+        : view;
+  const detailOrigin =
+    detailReturn.current?.target === `#${view}/${entity}`
+      ? detailReturn.current
+      : null;
+  const returnView =
+    detailOrigin?.view ||
+    (view === "case" ? (staff ? "staff" : "services") : "today");
+  const returnLabel = returnView === "today" ? "К услугам" : titles[returnView];
+  const backFromDetail = () => go(returnView, detailOrigin?.entity);
   return (
     <div className="app-shell">
-      {mapRoom && (
+      {(mapRoom || view === "map") && (
         <CampusMap
-          room={mapRoom.label}
-          roomId={mapRoom.id}
-          close={() => setMapRoom(null)}
+          room={mapRoom?.label}
+          roomId={mapRoom?.id}
+          date={mapRoom?.date}
+          availableRooms={mapRoom?.availableRooms}
+          close={() => {
+            if (mapRoom) setMapRoom(null);
+            else {
+              const origin = mapReturn.current;
+              mapReturn.current = null;
+              go(
+                origin?.view || (staff ? "staff" : "schedule"),
+                origin?.entity,
+              );
+            }
+          }}
         />
       )}
       <a className="skip-link" href="#main-content">
@@ -647,14 +938,13 @@ export default function Portal() {
       <PortalSidebar
         items={nav}
         current={currentNav}
-        activeRequests={activeRequests.length}
         logo={<Logo />}
         name={firstName + " " + user.name.split(" ")[2]}
         group={
           user.student_group + (!staff ? " · " + user.course + " курс" : "")
         }
         initials={initials}
-        home={staff ? "staff" : "today"}
+        home={staff ? "staff" : "schedule"}
         navigate={(v) => go(v as View)}
       />
       <div className="workspace">
@@ -662,83 +952,15 @@ export default function Portal() {
           <div className="mobile-brand">
             <Logo />
           </div>
-          <div className="breadcrumb">
-            <span>Личный кабинет</span>
-            <ChevronRight size={13} />
-            <strong>{titles[view]}</strong>
-          </div>
-          <div className="global-search">
-            <Search size={17} />
-            <input
-              aria-label="Поиск по кабинету"
-              placeholder="Что вы ищете?"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <>
-                <button
-                  className="icon-btn"
-                  aria-label="Очистить поиск"
-                  onClick={() => setSearch("")}
-                >
-                  <X size={16} />
-                </button>
-                <div className="search-results">
-                  {[
-                    ...navigation.map((n) => ({
-                      title: n.label,
-                      view: n.id,
-                      id: "",
-                    })),
-                    ...(!staff
-                      ? services.map((s) => ({
-                          title: s.title + " · " + s.language,
-                          view: "order",
-                          id: s.id,
-                        }))
-                      : []),
-                  ]
-                    .filter((n) =>
-                      n.title.toLowerCase().includes(search.toLowerCase()),
-                    )
-                    .map((n) => (
-                      <button
-                        key={n.view + n.id}
-                        onClick={() => go(n.view as View, n.id)}
-                      >
-                        {n.title}
-                        <ArrowUpRight size={15} />
-                      </button>
-                    ))}
-                  {![
-                    ...navigation.map((n) => n.label),
-                    ...services.map((s) => s.title + " " + s.language),
-                  ].some((n) =>
-                    n.toLowerCase().includes(search.toLowerCase()),
-                  ) && <p>Ничего не найдено. Попробуйте «справка».</p>}
-                </div>
-              </>
-            )}
-          </div>
-          <button
-            className={`icon-btn notification-button ${view === "notifications" ? "selected" : ""}`}
-            aria-label={`Уведомления${unread ? `, непрочитанных: ${unread}` : ""}`}
-            onClick={async () => {
-              await refresh();
-              go("notifications");
-            }}
-          >
-            <Bell size={22} />
-            {unread > 0 && <span className="notification-dot" />}
-          </button>
-          <button
-            className="top-avatar avatar"
-            aria-label="Мой профиль"
-            onClick={() => go("profile")}
-          >
-            {initials}
-          </button>
+          <span className="topbar-context">Личный кабинет</span>
+          <NotificationPopover
+            key={user.id}
+            notices={notices}
+            onOpenNotice={openNotice}
+            onReadAll={() => readNotices()}
+            onRead={readNotices}
+            onRefresh={() => void refresh()}
+          />
         </header>
         <main
           id="main-content"
@@ -752,10 +974,40 @@ export default function Portal() {
               <button onClick={() => void refresh()}>Повторить</button>
             </div>
           )}
+          {showServiceNavigation && (
+            <header className="service-section-header">
+              <div className="service-section-heading">
+                <h1>Центр сервиса «Студент»</h1>
+                {(view === "today" || view === "services") && (
+                  <div className="service-heading-actions">
+                    <button
+                      className="button primary"
+                      onClick={() => go("contact", view === "services" ? "services" : "")}
+                    >
+                      <MessageCircle size={18} />
+                      Написать в центр сервиса
+                    </button>
+                  </div>
+                )}
+              </div>
+              <nav
+                className="service-section-nav"
+                aria-label="Разделы центра сервиса"
+              >
+                {serviceSections.map((item) => (
+                  <button
+                    key={item.id}
+                    aria-current={view === item.id ? "page" : undefined}
+                    onClick={() => go(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+            </header>
+          )}
           {view === "today" && !staff && (
             <ServiceCenter
-              requests={requests}
-              lessons={dayLessons}
               favorites={data.favorites || []}
               go={(v, id) => go(v as View, id)}
               onFavorite={async (id, active) => {
@@ -774,6 +1026,7 @@ export default function Portal() {
               selected={entity}
               go={(v, id) => go(v as View, id)}
               canAsk={!staff}
+              embedded={Boolean(showServiceNavigation)}
             />
           )}
           {view === "wallet" && !staff && (
@@ -782,18 +1035,99 @@ export default function Portal() {
               go={(v, id) => go(v as View, id)}
             />
           )}
+          {view === "contact" && !staff && (
+            <ContactChoice
+              back={() => go(entity === "services" ? "services" : "today")}
+              choose={(service) => go("order", service)}
+            />
+          )}
           {view === "schedule" && !staff && (
             <>
+              {selectedLesson && <LessonDetails selected={selectedLesson} close={() => setSelectedLesson(null)}
+                openMap={() => { setMapRoom({label: selectedLesson.lesson.room, id: selectedLesson.lesson.roomId, date: selectedLesson.date}); setSelectedLesson(null); }}/>}
               <PageHeading
                 title="Расписание"
-                text="Занятия вашей группы. Изменения уже учтены."
+                text={`${scheduleName ? `Группа ${scheduleName} · ` : ""}${coverage ? "РУЗ МГИМО · выгрузка " + dateLabel(coverage.capturedOn) : "Демонстрационные занятия"} · МСК`}
+                action={canShowSchedule && !missingWeek && (
+                  <CalendarExport
+                    href={`/api/portal/schedule-calendar?${calendarParams}`}
+                    group={[scheduleName, selectedStream?.split(" (")[0]].filter(Boolean).join(" · ")}
+                    range={`${dateLabel(weekDays[0].toISOString())} – ${dateLabel(weekDays[6].toISOString())}`}
+                  />
+                )}
               />
+              <div className="panel schedule-scope">
+                <div className="segmented" role="group" aria-label="Чьё расписание">
+                  <button className={!otherSchedule ? "active" : ""} aria-pressed={!otherSchedule} onClick={() => { clearLessonLink(); setOtherSchedule(false); }}>Моё</button>
+                  <button className={otherSchedule ? "active" : ""} aria-pressed={otherSchedule} onClick={() => {
+                    clearLessonLink();
+                    setScheduleError("");
+                    setOtherSchedule(true);
+                    if (!groupCode) { setGroupCode(user.timetable_group || "2МО-07"); setScheduleMode("week"); }
+                  }}>Другая группа</button>
+                </div>
+                <a className="schedule-official" href="https://ruz.mgimo.ru/ruz/" target="_blank" rel="noopener noreferrer">
+                  Официальное расписание МГИМО <ArrowUpRight size={15} aria-hidden="true" />
+                </a>
+                {otherSchedule && scheduleGroups && (
+                  <>
+                    <label>Курс
+                      <select value={scheduleCourse} onChange={(event) => {
+                        setScheduleCourse(event.target.value);
+                        setGroupCode("");
+                        setStreamChoice(null);
+                        setGroupLessons(null);
+                        setScheduleError("");
+                      }}>
+                        <option value="">Все курсы</option>
+                        {availableCourses.map((course) => <option key={course} value={course}>{course} курс</option>)}
+                      </select>
+                    </label>
+                    <label>Группа
+                      <select value={groupCode} onChange={(event) => {
+                        setGroupCode(event.target.value);
+                        setStreamChoice(null);
+                        setGroupLessons(null);
+                        setScheduleError("");
+                        setScheduleMode("week");
+                      }}>
+                        <option value="">Выберите группу</option>
+                        {otherGroups.filter(({ course }) => !scheduleCourse || String(course) === scheduleCourse).map(({ code, source }) => (
+                          <option key={code} value={code}>{code} · {source === "ruz" ? "РУЗ МГИМО" : "демо"}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                )}
+                {streams.length > 0 && <label>Языковая подгруппа
+                  <select value={selectedStream || ""} disabled={savingSchedule} onChange={e => {
+                    if (officialPersonal) void saveSchedule(requestedGroup, e.target.value);
+                    else setStreamChoice(e.target.value);
+                  }}>
+                    {!officialPersonal && <option value="">Все подгруппы</option>}
+                    {streams.map(s => <option key={s} value={s}>{s.split(" (")[0]}</option>)}
+                  </select>
+                </label>}
+                {otherSchedule && streams.length > 0 && selectedStream && <button className="button secondary" disabled={savingSchedule}
+                  onClick={() => void saveSchedule(requestedGroup, selectedStream)}>Сделать моим расписанием</button>}
+                {officialPersonal && <button className="text-btn" disabled={savingSchedule} onClick={() => void saveSchedule("", "")}>Вернуть расписание профиля</button>}
+              </div>
+              {(otherSchedule || officialPersonal) && scheduleError ? (
+                <Empty title="Расписание пока недоступно" text={scheduleError}>
+                  <button className="button secondary" onClick={() => {
+                    setScheduleError("");
+                    setScheduleRetry((value) => value + 1);
+                  }}>Повторить</button>
+                </Empty>
+              ) : !canShowSchedule ? (
+                  <Empty icon={CalendarDays} title={scheduleGroups && !groupCode ? "Выберите группу" : "Загружаем расписание…"} />
+              ) : <>
               <div className="schedule-toolbar">
                 <div className="week-control">
                   <button
                     className="icon-btn"
                     aria-label="Предыдущая неделя"
-                    onClick={() => setWeek(week - 1)}
+                    onClick={() => { clearLessonLink(); setWeek(week - 1); }}
                   >
                     <ChevronLeft size={19} />
                   </button>
@@ -804,30 +1138,38 @@ export default function Portal() {
                   <button
                     className="icon-btn"
                     aria-label="Следующая неделя"
-                    onClick={() => setWeek(week + 1)}
+                    onClick={() => { clearLessonLink(); setWeek(week + 1); }}
                   >
                     <ChevronRight size={19} />
                   </button>
                   <button
                     className="text-button"
                     onClick={() => {
+                      clearLessonLink();
                       setWeek(0);
-                      setSelectedDay(dayIndex);
+                      setSelectedDay(-1);
+                      setScheduleMode("day");
                     }}
                   >
                     Сегодня
                   </button>
                 </div>
-                <div className="segmented">
+                <div
+                  className="segmented"
+                  role="group"
+                  aria-label="Вид расписания"
+                >
                   <button
                     className={scheduleMode === "day" ? "active" : ""}
+                    aria-pressed={scheduleMode === "day"}
                     onClick={() => setScheduleMode("day")}
                   >
                     День
                   </button>
                   <button
                     className={scheduleMode === "week" ? "active" : ""}
-                    onClick={() => setScheduleMode("week")}
+                    aria-pressed={scheduleMode === "week"}
+                    onClick={() => { clearLessonLink(); setScheduleMode("week"); }}
                   >
                     Неделя
                   </button>
@@ -838,10 +1180,15 @@ export default function Portal() {
                   <button
                     key={i}
                     onClick={() => {
+                      clearLessonLink();
                       setSelectedDay(i);
                       setScheduleMode("day");
                     }}
-                    className={`${activeDay === i ? "active" : ""} ${week === 0 && i === dayIndex ? "is-today" : ""}`}
+                    className={`${scheduleMode === "day" && activeDay === i ? "active" : ""} ${week === 0 && i === dayIndex ? "is-today" : ""}`}
+                    aria-pressed={scheduleMode === "day" && activeDay === i}
+                    aria-current={
+                      week === 0 && i === dayIndex ? "date" : undefined
+                    }
                   >
                     <span>{["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"][i]}</span>
                     <strong>{d.getUTCDate()}</strong>
@@ -849,17 +1196,9 @@ export default function Portal() {
                   </button>
                 ))}
               </div>
-              <div className="schedule-legend" aria-label="Обозначения занятий">
-                <span>
-                  <i className="lecture-dot" />
-                  Лекция
-                </span>
-                <span>
-                  <i className="seminar-dot" />
-                  Семинар
-                </span>
-              </div>
-              {scheduleMode === "day" ? (
+              {missingWeek ? <Empty icon={CalendarDays} title="За эту неделю нет выгрузки РУЗ">
+                <button className="button secondary" onClick={() => { setWeek(Math.round((Date.parse(mondayOf(coverage.to)) - Date.parse(mondayOf(today))) / 604800000)); setScheduleMode("week"); }}>Открыть неделю с {dateLabel(mondayOf(coverage.to))}</button>
+              </Empty> : scheduleMode === "day" ? (
                 <section className="panel">
                   <div className="section-heading">
                     <h2>
@@ -875,23 +1214,34 @@ export default function Portal() {
                         ][activeDay]
                       }
                     </h2>
-                    <span className="muted">{user.student_group}</span>
+                    <span className="muted">
+                      {dateLabel(weekDays[activeDay].toISOString())}
+                    </span>
                   </div>
-                  {lessons.filter((l) => l.day === activeDay).length ? (
-                    lessons.filter((l) => l.day === activeDay).map(lessonCard)
+                  {selectedLessons.length ? (
+                    selectedLessons.map(lessonCard)
                   ) : (
-                    <Empty
-                      icon={CalendarDays}
-                      title="В этот день занятий нет"
-                      text="Можно заняться проектом или просто отдохнуть."
-                    />
+                    <Empty icon={CalendarDays} title="В этот день занятий нет">
+                      {nextClassDay !== undefined && (
+                        <button
+                          className="button secondary"
+                          onClick={() => {
+                            setWeek(week + Math.floor(nextClassDay / 7));
+                            setSelectedDay(nextClassDay % 7);
+                          }}
+                        >
+                          Ближайшие занятия
+                          <ArrowRight size={16} />
+                        </button>
+                      )}
+                    </Empty>
                   )}
                 </section>
               ) : (
                 <div className="week-list">
                   {weekDays.map((d, i) => (
                     <section className="panel" key={i}>
-                      <div className="section-heading">
+                      <div className="section-heading week-day-heading">
                         <h2>
                           {
                             [
@@ -910,8 +1260,8 @@ export default function Portal() {
                           </span>
                         </h2>
                       </div>
-                      {lessons.filter((l) => l.day === i).length ? (
-                        lessons.filter((l) => l.day === i).map(lessonCard)
+                      {displayedLessons.filter((l) => l.day === i).length ? (
+                        displayedLessons.filter((l) => l.day === i).map(lessonCard)
                       ) : (
                         <p className="muted">Занятий нет</p>
                       )}
@@ -919,200 +1269,137 @@ export default function Portal() {
                   ))}
                 </div>
               )}
-              <p className="page-note">
-                Московское время · Учебное демонстрационное расписание
-                повторяется каждую неделю.
-              </p>
+              </>}
             </>
+          )}
+          {view === "study" && !staff && (
+              officialPersonal && !activeGroup ? <Empty title={scheduleError || "Загружаем дисциплины…"}>
+                {scheduleError && <button onClick={() => { setScheduleError(""); setScheduleRetry(n => n + 1); }}>Повторить</button>}
+              </Empty> : <StudyHub subjectKey={entity} grades={grades} lessons={officialPersonal ? displayedLessons : lessons} today={today}
+                datedWeek={officialPersonal ? scheduleWeek : undefined}
+                openGrades={() => go("grades")} openLesson={(date, id) => {
+                  if (!officialPersonal) { openLesson(date, id); return; }
+                  setSelectedDay((new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7);
+                  setScheduleMode("day"); setOtherSchedule(false); go("schedule");
+                }} />
+          )}
+          {view === "rooms" && !staff && (
+            <div className="room-availability-page">
+              <PageHeading
+                title="Свободные аудитории"
+                text="Выберите дату и интервал, затем откройте найденную аудиторию на карте"
+                action={<button className="button secondary" onClick={() => go("map")}><MapIcon size={17} /> Карта кампуса</button>}
+              />
+              <RoomAvailability
+                date={roomSearchDate}
+                setDate={setRoomSearchDate}
+                select={(key, date) => setMapRoom({ label: key.split(":")[1], id: key, date })}
+                showOnMap={(rooms, date) => setMapRoom({ label: "", date, availableRooms: rooms })}
+                interval={roomSearchInterval}
+              />
+            </div>
           )}
           {view === "grades" && !staff && (
             <>
               <PageHeading
                 title="Успеваемость"
-                text="Понятная картина того, как идут дела с учёбой."
+                text="Летняя сессия · 2025/26"
               />
-              <div className="grade-overview">
-                <section className="panel average-card">
-                  <span className="eyebrow">СРЕДНИЙ БАЛЛ</span>
-                  <strong>
-                    {average}
-                    <small>/ 100</small>
-                  </strong>
-                  <p>По {scoreGrades.length} экзаменам за летнюю сессию</p>
-                  <div className="progress-track">
-                    <span style={{ width: `${average}%` }} />
-                  </div>
-                </section>
-                <section className="panel session-card">
-                  <span className="success-icon">
-                    <CheckCircle2 size={27} />
-                  </span>
-                  <div>
-                    <h2>Сессия закрыта</h2>
-                    <p>
-                      {grades.length} из {grades.length} дисциплин сданы.
-                      Академических задолженностей нет.
-                    </p>
-                    <span className="status status-ready">
-                      <Check size={13} />
-                      Всё в порядке
-                    </span>
-                  </div>
-                </section>
-              </div>
-              <div className="section-heading grades-heading">
-                <h2>Результаты по дисциплинам</h2>
-                <span className="semester-pill">Летняя сессия · 2025/26</span>
-              </div>
-              <div className="grade-list">
-                {grades.map((g) => (
-                  <article className="panel grade-card" key={g.subject}>
-                    <div>
-                      <span className="lesson-kind">
-                        {g.type} · {dateLabel(g.date + "T12:00:00Z")}
-                      </span>
-                      <h3>{g.subject}</h3>
-                      <p>
-                        <UserRound size={14} />
-                        {g.teacher}
-                      </p>
-                    </div>
-                    <div className="grade-result">
-                      {g.score !== null ? (
-                        <>
-                          <strong
-                            className={
-                              g.score >= 90
-                                ? "excellent"
-                                : g.score >= 75
-                                  ? "good"
-                                  : "satisfactory"
-                            }
-                          >
-                            {g.score}
-                            <small>/100</small>
-                          </strong>
-                          <span>{g.result}</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="grade-pass">
-                            <CheckCircle2 size={20} />
-                            Зачтено
-                          </span>
-                          <span>Без балльной оценки</span>
-                        </>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
-              <div className="inline-info">
-                <Info size={17} />
-                <span>
-                  Средний балл учитывает только экзамены. Зачёты не считаются за
-                  ноль. Шкала демо: 90–100 — отлично, 75–89 — хорошо, 60–74 —
-                  удовлетворительно.
-                </span>
-              </div>
               <section className="transcript-callout">
                 <BookOpen size={27} />
-                <div>
-                  <h3>Нужна официальная выписка?</h3>
-                  <p>Закажите документ на русском или английском языке.</p>
+                <div><h3>Выписка из зачётной книжки</h3></div>
+                <div className="transcript-actions">
+                  <button className="button secondary" onClick={() => go("order", "grades-ru")}>
+                    На русском
+                  </button>
+                  <button className="button secondary" onClick={() => go("order", "transcript-en")}>
+                    На английском
+                  </button>
                 </div>
-                <button
-                  className="button secondary"
-                  onClick={() => go("order", "grades-ru")}
-                >
-                  Заказать выписку
-                  <ArrowUpRight size={16} />
-                </button>
               </section>
+              <GradeOverview
+                grades={grades}
+                onExamRequest={staff ? undefined : (assessment) =>
+                  go("order", `exam-request?assessment=${assessment}`)}
+              />
             </>
           )}
-          {(view === "services" || view === "staff") && (
+          {view === "staff-report" && staff && (
             <>
               <PageHeading
-                title={staff ? "Обращения студентов" : "Мои обращения"}
-                text={
-                  staff
-                    ? "Очередь сервисного центра. Ответьте студенту в карточке обращения."
-                    : "Заявки на справки, ваши вопросы и ответы сотрудников."
-                }
-                action={
-                  <button
-                    className="button secondary"
-                    onClick={async () => {
-                      await refresh();
-                      setToast("Данные обновлены");
-                    }}
-                  >
-                    <RefreshCw size={16} />
-                    Обновить
-                  </button>
-                }
+                title="Отчёт по обращениям"
+                text="Сроки обработки и выдача документов по услугам."
               />
-              {!staff && (
-                <div className="request-actions">
-                  <button
-                    className="button primary"
-                    onClick={() => go("today")}
-                  >
-                    <Plus size={16} />
-                    Заказать документ
-                  </button>
-                  <button
-                    className="button secondary"
-                    onClick={() => go("order", "question")}
-                  >
-                    <MessageCircle size={16} />
-                    Задать вопрос
-                  </button>
-                </div>
+              <OfficeReport rows={requests} today={today} />
+            </>
+          )}
+          {view === "announcements" && staff && <>
+            <button className="back-button" onClick={() => go("staff")}><ArrowLeft size={17} />К обращениям</button>
+            <PageHeading title="Объявления деканата" />
+            <OfficeAnnouncements client={api} />
+          </>}
+          {(view === "services" || (view === "staff" && staff)) && (
+            <>
+              {staff && (
+                <PageHeading
+                  title="Обращения студентов"
+                  text="Ответьте студенту в карточке обращения."
+                  action={
+                    <button
+                      className="button secondary"
+                      onClick={() => go("announcements")}
+                    >
+                      <Bell size={16} />
+                      Объявления деканата
+                    </button>
+                  }
+                />
               )}
+              <div className="queue-tools">
+              <label className="queue-search">
+                <span className="sr-only">Поиск обращений</span>
+                <input type="search" placeholder={staff ? "Номер, услуга, студент или группа" : "Номер обращения или название услуги"} value={requestQuery}
+                  onChange={event => { setRequestQuery(event.target.value); setRequestLimit(20); }} />
+              </label>
               <div className="filter-row">
                 <SlidersHorizontal size={16} />
                 {[
                   ["all", "Все"],
+                  ...(staff ? [["new", "Новые"]] : []),
                   ["active", "В работе"],
+                  ["reply", staff ? "Ждём ответ" : "Нужен мой ответ"],
                   ["ready", "Готовые"],
+                  ...(staff
+                    ? [
+                        ["pickup", "К выдаче"],
+                        ["feedback", "Проблемы"],
+                      ]
+                    : []),
                 ].map(([id, label]) => (
                   <button
                     key={id}
                     className={
                       requestFilter === id ? "filter active" : "filter"
                     }
-                    onClick={() => setRequestFilter(id)}
+                    aria-pressed={requestFilter === id}
+                    onClick={() => { setRequestFilter(id); setRequestLimit(20); }}
                   >
                     {label}
                   </button>
                 ))}
-                <span className="muted">{requests.length} обращений</span>
+              </div>
               </div>
               <section className="panel request-list">
-                {requests.filter(
-                  (r) =>
-                    requestFilter === "all" ||
-                    (requestFilter === "ready"
-                      ? r.status === "ready"
-                      : !["ready", "cancelled"].includes(r.status)),
-                ).length ? (
-                  requests
-                    .filter(
-                      (r) =>
-                        requestFilter === "all" ||
-                        (requestFilter === "ready"
-                          ? r.status === "ready"
-                          : !["ready", "cancelled"].includes(r.status)),
-                    )
-                    .map(requestCard)
+                {visibleRequests.length ? (
+                  visibleRequests.slice(0, requestLimit).map(requestCard)
                 ) : (
                   <Empty
-                    title="Здесь пока нет обращений"
-                    text="Закажите справку или задайте вопрос сервисному центру."
+                    title={
+                      terms.length || requestFilter !== "all" ? "По вашему запросу обращений нет" : "Обращений пока нет"
+                    }
+                    text={terms.length || requestFilter !== "all" ? "Попробуйте изменить запрос или фильтр." : staff ? "Здесь появятся новые заявки студентов." : "Выберите услугу в каталоге или задайте вопрос сервисному центру."}
                   >
-                    {!staff && (
+                    {terms.length || requestFilter !== "all" ? <button className="text-button" onClick={() => { setRequestQuery(""); setRequestFilter("all"); setRequestLimit(20); }}>Сбросить поиск и фильтры</button> : !staff && (
                       <button
                         className="button primary"
                         onClick={() => go("today")}
@@ -1123,25 +1410,80 @@ export default function Portal() {
                   </Empty>
                 )}
               </section>
+              {visibleRequests.length > requestLimit && <button className="button secondary queue-more" onClick={() => setRequestLimit(limit => limit + 20)}>Показать ещё · {requestLimit} из {visibleRequests.length}</button>}
             </>
           )}
           {view === "order" &&
             !staff &&
-            (selectedService ? (
-              selectedService.id === "question" ? (
+            (officialService ? (
+              <OfficialServiceInfo
+                service={officialService}
+                back={backFromDetail}
+                backLabel={returnLabel}
+              />
+            ) : selectedService?.id === "feedback" ? (
+              relatedId && !feedbackSource ? (
+                <Empty title="Заявка недоступна">
+                  <button
+                    className="button secondary"
+                    onClick={() => go("services")}
+                  >
+                    К обращениям
+                  </button>
+                </Empty>
+              ) : (
+                <FeedbackForm
+                  key={entity}
+                  user={user}
+                  relatedRequest={feedbackSource || undefined}
+                  back={backFromDetail}
+                  backLabel={feedbackSource ? "К заявке" : returnLabel}
+                  create={async (payload) => {
+                    const request = await api<Case>("requests", payload);
+                    await refresh();
+                    setToast(
+                      "Сообщение сохранено. Ответ появится в «Обращениях».",
+                    );
+                    go("case", request.id);
+                  }}
+                />
+              )
+            ) : selectedService ? (
+              selectedService.id === "question" ||
+              "topic" in selectedService ? (
                 <AppealForm
                   key={entity}
-                  initialTopic={
-                    new URLSearchParams(entity.split("?")[1] || "").get(
-                      "topic",
-                    ) || "documents"
+                  initialTopic={orderParams.get("topic") || "documents"}
+                  application={
+                    "topic" in selectedService ? selectedService : undefined
                   }
-                  user={user}
-                  back={() => go("today")}
+                  assessments={selectedService.id === "exam-request" ? getExamOptions(grades) : undefined}
+                  initialAssessment={orderParams.get("assessment") ?? undefined}
+                  visitAbout={visitAbout}
+                  requestVisit={
+                    "topic" in selectedService &&
+                    selectedService.id !== "visit-request"
+                      ? () =>
+                          go(
+                            "order",
+                            `visit-request?about=${selectedService.id}`,
+                          )
+                      : undefined
+                  }
+                  back={
+                    visitAbout
+                      ? () => go("order", visitAbout.id)
+                      : backFromDetail
+                  }
+                  backLabel={visitAbout ? visitAbout.title : returnLabel}
                   create={async (payload) => {
                     const r = await api<Case>("requests", payload);
                     await refresh();
-                    setToast("Обращение принято и направлено в подразделение");
+                    setToast(
+                      selectedService.id === "question"
+                        ? "Обращение принято и направлено в подразделение"
+                        : "Демо-заявка сохранена в «Обращениях»",
+                    );
                     go("case", r.id);
                   }}
                 />
@@ -1150,7 +1492,8 @@ export default function Portal() {
                   key={selectedService.id}
                   service={selectedService}
                   user={user}
-                  back={() => go("today")}
+                  back={backFromDetail}
+                  backLabel={returnLabel}
                   onCreated={async (r) => {
                     await refresh();
                     setToast(
@@ -1163,25 +1506,17 @@ export default function Portal() {
                 />
               )
             ) : (
-              <Empty title="Документ не найден">
-                <button
-                  className="button primary"
-                  onClick={() => go("services")}
-                >
-                  К каталогу
+              <Empty title="Услуга не найдена">
+                <button className="button primary" onClick={() => go("today")}>
+                  К услугам
                 </button>
               </Empty>
             ))}
           {view === "case" && (
             <>
-              <button
-                className="back-button"
-                onClick={() => {
-                  go(staff ? "staff" : "services");
-                }}
-              >
+              <button className="back-button" onClick={backFromDetail}>
                 <ArrowLeft size={17} />
-                Все заявки
+                {returnLabel}
               </button>
               {caseLoading ? (
                 <div className="loading-card" aria-live="polite">
@@ -1200,8 +1535,15 @@ export default function Portal() {
               ) : (
                 activeCase && (
                   <CaseDetail
+                    key={activeCase.id + activeCase.status}
                     item={activeCase}
                     staff={staff}
+                    openRelated={(id) => go("case", id)}
+                    reportProblem={
+                      !staff && activeCase.service !== "feedback"
+                        ? () => go("order", `feedback?request=${activeCase.id}`)
+                        : undefined
+                    }
                     onChange={async () => {
                       await refresh();
                       setCaseTick(caseTick + 1);
@@ -1261,30 +1603,18 @@ export default function Portal() {
                       <h2>{n.title}</h2>
                       <p>{n.text}</p>
                       <div className="notice-actions">
-                        <button
+                        {n.type !== "announcement" && <button
                           className="text-button"
-                          onClick={() => {
-                            void readNotices(n.id);
-                            if (n.requestId) {
-                              go("case", n.requestId);
-                              return;
-                            }
-                            go(
-                              n.type === "deadline"
-                                ? "order"
-                                : (n.link as View),
-                              n.type === "deadline" ? "transcript-en" : "",
-                            );
-                          }}
+                          onClick={() => openNotice(n)}
                         >
                           {n.actionLabel ||
                             (n.type === "schedule"
                               ? "Открыть расписание"
                               : n.type === "deadline"
                                 ? "Заказать транскрипт"
-                                : "К справкам")}
+                                : "К услугам")}
                           <ArrowRight size={15} />
-                        </button>
+                        </button>}
                         {!n.read && (
                           <button
                             className="text-button muted"
@@ -1355,6 +1685,13 @@ export default function Portal() {
                     поступают из информационной системы вуза.
                   </span>
                 </div>
+                {!staff && (
+                  <div className="profile-correction">
+                    <button className="button secondary" onClick={() => go("order", "profile-correction")}>
+                      Исправить данные <ChevronRight size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
               </section>
               <section className="panel privacy-card">
                 <ShieldCheck size={26} />
@@ -1378,11 +1715,14 @@ export default function Portal() {
           {staff &&
             ![
               "staff",
+              "staff-report",
+              "announcements",
               "services",
               "profile",
               "notifications",
               "case",
               "employees",
+              "map",
             ].includes(view) && (
               <Empty
                 title="Кабинет сотрудника"
@@ -1400,19 +1740,20 @@ export default function Portal() {
         </main>
       </div>
       <nav className="mobile-nav" aria-label="Мобильная навигация">
-        {nav
-          .filter((n) => n.id !== "wallet" && n.id !== "employees")
-          .map((n) => (
-            <button
-              key={n.id}
-              className={currentNav === n.id ? "active" : ""}
-              onClick={() => go(n.id as View)}
-              aria-current={currentNav === n.id ? "page" : undefined}
-            >
-              <n.icon size={21} />
-              <span>{"short" in n ? n.short : n.label}</span>
-            </button>
-          ))}
+        {(staff ? [...nav, profileNav] : [...nav.filter((n) => ["schedule", "study", "rooms", "today"].includes(n.id)), profileNav]).map((n) => (
+          <button
+            key={n.id}
+            aria-label={n.label}
+            className={currentNav === n.id ? "active" : ""}
+            onClick={() => go(n.id as View)}
+            aria-current={currentNav === n.id ? "page" : undefined}
+          >
+            <span className="mobile-nav-icon">
+              <n.icon size={21} aria-hidden="true" />
+            </span>
+            <span>{"short" in n ? n.short : n.label}</span>
+          </button>
+        ))}
       </nav>
       {toast && (
         <div className="toast" role="status">
@@ -1436,14 +1777,14 @@ function PageHeading({
   action,
 }: {
   title: string;
-  text: string;
+  text?: string;
   action?: ReactNode;
 }) {
   return (
     <div className="page-heading">
       <div>
         <h1>{title}</h1>
-        <p>{text}</p>
+        {text && <p>{text}</p>}
       </div>
       {action}
     </div>
@@ -1453,11 +1794,13 @@ function OrderForm({
   service,
   user,
   back,
+  backLabel,
   onCreated,
 }: {
-  service: Service;
+  service: DocumentService;
   user: Student;
   back: () => void;
+  backLabel: string;
   onCreated: (r: Case) => Promise<void>;
 }) {
   const [format, setFormat] = useState("electronic"),
@@ -1496,7 +1839,7 @@ function OrderForm({
     <>
       <button className="back-button" onClick={back}>
         <ArrowLeft size={17} />
-        Все документы
+        {backLabel}
       </button>
       <PageHeading title={service.title} text={service.language} />
       <form className="order-layout" onSubmit={submit}>
@@ -1679,16 +2022,13 @@ function OrderForm({
           </section>
         </div>
         <aside className="order-summary panel">
-          <span className="eyebrow">ВАША ЗАЯВКА</span>
-          <ServiceIcon service={service} />
-          <h2>{service.title}</h2>
-          <p>{service.language}</p>
+          <h2>Срок и получение</h2>
           <div className="order-term">
             <Clock3 size={18} />
             <span>
               <strong>
                 {service.automatic && format === "electronic"
-                  ? "До 15 минут"
+                  ? "Мгновенно"
                   : "До 3 рабочих дней"}
               </strong>
               <small>
@@ -1709,6 +2049,9 @@ function OrderForm({
             <Info size={15} />
             Вы получите учебный образец, без подписи вуза.
           </p>
+          {"department" in service && (
+            <p className="muted">Заявку рассмотрит {service.department.toLowerCase()}.</p>
+          )}
           {error && (
             <div id="form-error" tabIndex={-1} className="error" role="alert">
               {error}
@@ -1738,12 +2081,29 @@ function OrderForm({
 function CaseDetail({
   item,
   staff,
+  openRelated,
+  reportProblem,
   onChange,
 }: {
   item: Case;
   staff: boolean;
+  openRelated: (id: string) => void;
+  reportProblem?: () => void;
   onChange: () => Promise<void>;
 }) {
+  const document = isDocumentService(item.service);
+  const application =
+    !document && item.service !== "question" && item.service !== "feedback";
+  const contextual = item.service === "exam-request" || item.service === "profile-correction";
+  const readyDocument = document && ["ready", "issued"].includes(item.status);
+  const readyEvent = item.events?.find((event) => event.status === "ready");
+  const issuedEvent = item.events?.find((event) => event.status === "issued");
+  const canIssue =
+    staff && document && item.format === "paper" && item.status === "ready";
+  const reason =
+    item.service === "feedback"
+      ? feedbackReasons.find((entry) => entry.id === item.topic)
+      : undefined;
   const service = services.find((s) => s.id === item.service)!,
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -1752,9 +2112,11 @@ function CaseDetail({
     [nextStatus, setNextStatus] = useState(
       item.status === "created"
         ? "working"
-        : item.status === "working"
-          ? "ready"
-          : "working",
+        : canIssue
+          ? "issued"
+          : item.status === "working"
+            ? "ready"
+            : "working",
     );
   async function update(e: FormEvent) {
     e.preventDefault();
@@ -1796,9 +2158,13 @@ function CaseDetail({
           <Status
             value={item.status}
             label={
-              item.service === "question" && item.status === "ready"
-                ? "Решено"
-                : undefined
+              !document && item.status === "ready"
+                ? item.service === "question"
+                  ? "Решено"
+                  : "Ответ получен"
+                : document && item.format === "paper" && item.status === "ready"
+                  ? "К выдаче"
+                  : undefined
             }
           />
         }
@@ -1857,46 +2223,92 @@ function CaseDetail({
           </span>
         </div>
       )}
-      {item.service === "question" && item.status === "ready" && (
+      {!document && item.status === "ready" && (
         <div className="ready-banner">
           <CheckCircle2 size={25} />
           <div>
-            <h2>На ваше обращение ответили</h2>
+            <h2>
+              {application
+                ? "Получен ответ по заявке"
+                : "На ваше обращение ответили"}
+            </h2>
             <p>Ответ сотрудника сохранён в истории ниже.</p>
           </div>
         </div>
       )}
-      {item.status === "ready" && item.service !== "question" && (
-        <div className="ready-banner">
-          <span className="success-icon">
-            <CheckCircle2 size={27} />
+      {!staff && contextual && ["created", "working"].includes(item.status) && (
+        <div className="inline-info">
+          <Info size={18} />
+          <span>
+            {item.service === "exam-request"
+              ? "Дождитесь ответа учебного офиса. Если понадобится оригинал, сотрудник сообщит, куда и когда его принести."
+              : "Сервисный центр проверит сведения. Ответ или запрос подтверждения появится в истории заявки."}
           </span>
-          <div>
-            <h2>
-              {item.format === "electronic"
-                ? "Ваш документ готов"
-                : "Можно забирать документ"}
-            </h2>
-            <p>
-              {item.format === "electronic"
-                ? "Скачайте учебный PDF. Он останется доступен в этой заявке."
-                : "Учебная точка выдачи: кабинет А-101, пн–пт, 10:00–17:00. PDF-образец также доступен ниже."}
-            </p>
-          </div>
-          <a
-            className="button primary"
-            href={`/api/portal/requests/${item.id}/document`}
-          >
-            <Download size={17} />
-            Скачать PDF
-          </a>
         </div>
       )}
-      {item.service === "question" && (
+      {readyDocument && (
+        <>
+          <section className="ready-banner document-ready">
+            <span className="success-icon">
+              <CheckCircle2 size={26} />
+            </span>
+            <div>
+              <h2>
+                {item.status === "issued"
+                  ? "Документ выдан"
+                  : item.format === "paper"
+                    ? "Документ готов к выдаче"
+                    : "Документ готов"}
+              </h2>
+              {issuedEvent && (
+                <p>Выдан {dateLabel(issuedEvent.created_at, true)} (МСК).</p>
+              )}
+              {item.status === "ready" && item.format === "paper" && (
+                <p>
+                  Учебная точка выдачи — кабинет А-101, пн–пт, 10:00–17:00
+                  (МСК). Получателю нужно удостоверение личности.
+                </p>
+              )}
+            </div>
+            <div className="document-downloads">
+              <a
+                className="button primary"
+                href={`/api/portal/requests/${item.id}/document`}
+              >
+                <Download size={17} />
+                Скачать PDF
+              </a>
+            </div>
+          </section>
+          <DocumentVerification id={item.id} />
+        </>
+      )}
+      {!document && (
         <section className="panel appeal-original">
-          <span className="eyebrow">ВАШЕ ОБРАЩЕНИЕ</span>
+          <span className="eyebrow">
+            {application ? "ВАША ЗАЯВКА" : "ВАШЕ ОБРАЩЕНИЕ"}
+          </span>
           <h2>{item.department}</h2>
+          {reason && <p>Причина — {reason.label}</p>}
+          {item.related_request_id && (
+            <button
+              className="text-button"
+              onClick={() => openRelated(item.related_request_id!)}
+            >
+              Исходная заявка №{" "}
+              {item.related_request_id.slice(-8).toUpperCase()}{" "}
+              <ArrowUpRight size={14} />
+            </button>
+          )}
           <p>{item.message}</p>
+          {item.evidence && (
+            <a className="case-evidence" href={`/api/portal/requests/${item.id}/evidence`}>
+              <Download size={18} aria-hidden="true" />
+              <span><strong>Скачать подтверждение</strong>
+                <small>{item.evidence.name} · {Math.max(1, Math.ceil(item.evidence.byteSize / 1024))} КБ</small>
+              </span>
+            </a>
+          )}
         </section>
       )}
       <div className="case-layout">
@@ -1915,14 +2327,20 @@ function CaseDetail({
                 className={i === item.events!.length - 1 ? "current" : ""}
               >
                 <span className="timeline-marker">
-                  {event.status === "ready" ? <Check size={15} /> : <span />}
+                  {["ready", "issued"].includes(event.status) ? (
+                    <Check size={15} />
+                  ) : (
+                    <span />
+                  )}
                 </span>
                 <div>
                   <div className="timeline-title">
                     <strong>
-                      {item.service === "question" && event.status === "ready"
+                      {!document && event.status === "ready"
                         ? "Ответ получен"
-                        : statuses[event.status]}
+                        : event.status === "ready" && item.format === "paper"
+                          ? "Готово к выдаче"
+                          : statuses[event.status]}
                     </strong>
                     <time>{dateLabel(event.created_at, true)}</time>
                   </div>
@@ -1931,22 +2349,33 @@ function CaseDetail({
               </li>
             ))}
           </ol>
-          {!["ready", "cancelled"].includes(item.status) && (
-            <div className="eta">
-              <Clock3 size={17} />
-              <span>
-                Плановая готовность:{" "}
-                <strong>{dateLabel(item.due_at, true)}</strong>
-              </span>
-            </div>
-          )}
-          {((staff && !["ready", "cancelled"].includes(item.status)) ||
+          {(staff || !application || contextual) &&
+            !["ready", "issued", "cancelled"].includes(item.status) && (
+              <div className="eta">
+                <Clock3 size={17} />
+                <span>
+                  Плановый срок <strong>{dateLabel(item.due_at, true)}</strong>
+                </span>
+              </div>
+            )}
+          {((staff &&
+            (canIssue ||
+              !["ready", "issued", "cancelled"].includes(item.status))) ||
             (!staff && item.status === "needs_info")) && (
             <form className="staff-form" onSubmit={update}>
               <h3>
-                {staff ? "Обработка обращения" : "Ответить сервисному центру"}
+                {canIssue
+                  ? "Отметить выдачу"
+                  : staff
+                    ? "Обработка обращения"
+                    : "Ответить сервисному центру"}
               </h3>
-              {staff && (
+              {canIssue && (
+                <p className="muted">
+                  Подтвердите после передачи бумажного документа получателю.
+                </p>
+              )}
+              {staff && !canIssue && (
                 <div className="form-field">
                   <label htmlFor="next-status">Новый статус</label>
                   <select
@@ -1961,7 +2390,9 @@ function CaseDetail({
                         : ["working", "cancelled"]
                     ).map((s) => (
                       <option value={s} key={s}>
-                        {statuses[s]}
+                        {s === "ready" && !document
+                          ? "Ответить и закрыть"
+                          : statuses[s]}
                       </option>
                     ))}
                   </select>
@@ -1970,7 +2401,7 @@ function CaseDetail({
               <div className="form-field">
                 <label htmlFor="case-comment">
                   {staff
-                    ? item.service === "question"
+                    ? !document
                       ? "Ответ студенту"
                       : "Комментарий студенту"
                     : "Ваш ответ"}
@@ -1984,9 +2415,11 @@ function CaseDetail({
                   required={
                     !staff ||
                     ["needs_info", "cancelled"].includes(nextStatus) ||
-                    (item.service === "question" && nextStatus === "ready")
+                    (!document && nextStatus === "ready")
                   }
-                  minLength={5}
+                  minLength={
+                    staff && !document && nextStatus === "ready" ? 10 : 5
+                  }
                   placeholder={
                     staff
                       ? "Что важно знать студенту?"
@@ -2002,6 +2435,8 @@ function CaseDetail({
               <button className="button primary" disabled={busy}>
                 {busy ? (
                   <Spinner />
+                ) : canIssue ? (
+                  "Подтвердить выдачу"
                 ) : staff ? (
                   "Сохранить статус"
                 ) : (
@@ -2014,6 +2449,12 @@ function CaseDetail({
         <aside className="panel case-details">
           <h2>Детали</h2>
           <dl>
+            {readyEvent && document && (
+              <div>
+                <dt>Документ подготовлен</dt>
+                <dd>{dateLabel(readyEvent.created_at, true)} (МСК)</dd>
+              </div>
+            )}
             {staff && (
               <div>
                 <dt>Студент</dt>
@@ -2028,13 +2469,9 @@ function CaseDetail({
               <dd>{dateLabel(item.created_at, true)}</dd>
             </div>
             <div>
-              <dt>
-                {item.service === "question"
-                  ? "Способ ответа"
-                  : "Способ получения"}
-              </dt>
+              <dt>{!document ? "Способ ответа" : "Способ получения"}</dt>
               <dd>
-                {item.service === "question"
+                {!document
                   ? "В личном кабинете"
                   : item.format === "electronic"
                     ? "Электронный документ"
@@ -2073,11 +2510,19 @@ function CaseDetail({
           <div className="demo-document-note">
             <ShieldCheck size={17} />
             <span>
-              {item.service === "question"
+              {!document
                 ? "Учебное обращение. Реальным подразделениям не отправляется."
-                : "Учебный документ с вымышленными данными, без официальной электронной подписи."}
+                : "Учебный документ с вымышленными данными."}
             </span>
           </div>
+          {reportProblem && (
+            <button
+              className="text-button problem-action"
+              onClick={reportProblem}
+            >
+              <Info size={16} /> Сообщить о проблеме
+            </button>
+          )}
         </aside>
       </div>
     </>

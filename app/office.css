@@ -1,0 +1,44 @@
+.office-announcements {
+  display: grid;
+  gap: 1rem;
+  max-width: 52rem;
+}
+.office-announcements > div:empty { display: none; }
+.bulletin-form, .bulletin-history { padding: clamp(1rem, 3vw, 2rem); }
+.bulletin-form fieldset {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  border: 0;
+  padding: 1rem 0 0;
+}
+.bulletin-form label { display: grid; gap: .4rem; font-size: .9375rem; font-weight: 600; }
+.bulletin-form :is(input, select, textarea) { font: inherit; font-weight: 400; font-size: 1rem; }
+.bulletin-form textarea { resize: vertical; }
+.bulletin-form .button { justify-self: start; }
+.bulletin-history article {
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.bulletin-history article:last-child { padding-bottom: 0; border: 0; }
+.bulletin-detail { overflow: auto; padding: 1rem; overflow-wrap: anywhere; }
+.bulletin-detail small, .bulletin-history small { font-size: .875rem; color: var(--muted); }
+.bulletin-detail h3, .bulletin-history h3 { margin: .5rem 0; }
+.bulletin-detail p, .bulletin-history article p { white-space: pre-wrap; font-size: 1rem; margin-bottom: .75rem; }
+.bulletin-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.bulletin-preview { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.queue-tools { display: grid; gap: .75rem; margin: 0 0 1rem; }
+.queue-search { max-width: 34rem; min-width: 0; }
+.queue-tools .filter-row { flex-wrap: wrap; margin: 0; }
+.queue-more { display: flex; margin: 1rem auto; }
+.request-row .request-copy > span, .request-row .request-copy > small { font-size: .8125rem; line-height: 1.45; }
+.request-row .status { font-size: .8125rem; }
+.notification-feed-copy strong { font-size: .9375rem; }
+.notification-feed-copy > span { font-size: .875rem; }
+.public-unit { padding: 1rem 0; border-bottom: 1px solid #dce2ec; }
+.public-unit:last-child { border: 0; }
+.public-unit h3 { margin: 0; }
+.public-unit p { margin: .4rem 0; }
+.public-unit div { display: flex; flex-wrap: wrap; gap: .5rem 1.2rem; }
+.public-unit a { color: #0649b3; overflow-wrap: anywhere; }

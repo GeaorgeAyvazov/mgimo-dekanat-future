@@ -2,10 +2,9 @@
 import { useRef, useState, type FormEvent } from "react";
 import {
   Search,
-  UsersRound,
   Star,
   ArrowRight,
-  ArrowUpRight,
+  ArrowLeft,
   FileText,
   Globe2,
   ListChecks,
@@ -13,27 +12,58 @@ import {
   Award,
   MessageCircle,
   FolderOpen,
-  Inbox,
   Clock3,
-  CalendarDays,
   ChevronRight,
   CheckCircle2,
-  MapPin,
   Send,
-  ShieldCheck,
   LoaderCircle,
-  Compass,
   X,
+  CalendarDays,
+  ArrowUpRight,
+  Flag,
 } from "lucide-react";
 import {
   services,
   topics,
   dateLabel,
-  type Student,
+  isDocumentService,
   type Case,
-  type Lesson,
 } from "@/lib/catalog";
+import {
+  officialServices,
+  serviceCategories,
+  type ApplicationService,
+  type OfficialService,
+} from "@/lib/service-directory";
+import { examReasons, getExamOptions, profileFields, profileReasons } from "@/lib/request-context";
+import { evidenceAccept, evidenceFileType, requiresEvidence } from "@/lib/request-evidence";
 type Navigate = (view: string, id?: string) => void;
+
+export function ContactChoice({ back, choose }: {
+  back: () => void;
+  choose: (service: "question" | "feedback") => void;
+}) {
+  return (
+    <>
+      <button className="back-button" onClick={back}>
+        <ArrowLeft size={16} /> Назад
+      </button>
+      <div className="page-heading"><h1>Написать в центр сервиса</h1></div>
+      <div className="study-quick">
+        <button onClick={() => choose("question")}>
+          <MessageCircle size={21} />
+          <span><strong>Задать вопрос</strong><small>Уточнить порядок действий, сроки или требования</small></span>
+          <ChevronRight size={17} />
+        </button>
+        <button onClick={() => choose("feedback")}>
+          <Flag size={21} />
+          <span><strong>Сообщить о проблеме</strong><small>Передать жалобу или предложение координатору</small></span>
+          <ChevronRight size={17} />
+        </button>
+      </div>
+    </>
+  );
+}
 const icons = {
   file: FileText,
   globe: Globe2,
@@ -41,64 +71,94 @@ const icons = {
   book: BookOpen,
   award: Award,
   message: MessageCircle,
+  calendar: CalendarDays,
 };
-const situations = [
-  {
-    label: "Подтвердить, что я студент",
-    id: "enrollment-ru",
-    text: "Справка об обучении подтверждает ваш статус. Укажите организацию или «По месту требования».",
-  },
-  {
-    label: "Подать документы на обмен",
-    id: "transcript-en",
-    text: "Транскрипт содержит результаты обучения на английском. Проверьте написание имени по загранпаспорту.",
-  },
-  {
-    label: "Получить все свои оценки",
-    id: "grades-ru",
-    text: "Выписка из зачётной книжки собирает оценки и зачёты в один документ.",
-  },
-  {
-    label: "Задать вопрос по учёбе",
-    id: "question",
-    text: "Опишите ситуацию один раз. Обращение получит нужное подразделение, а ответ останется в кабинете.",
-  },
+const directory = [
+  ...services.filter((s) => s.id !== "question" && s.id !== "feedback"),
+  ...officialServices,
 ];
+
+function ServiceSources({
+  sources,
+}: {
+  sources: ApplicationService["sources"] | OfficialService["sources"];
+}) {
+  return (
+    <ul className="service-sources">
+      {sources.map(({ label, href }) => (
+        <li key={href}>
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            {label} <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function OfficialServiceInfo({
+  service,
+  back,
+  backLabel,
+}: {
+  service: OfficialService;
+  back: () => void;
+  backLabel: string;
+}) {
+  return (
+    <>
+      <button className="back-button" onClick={back}>
+        <ArrowLeft size={17} /> {backLabel}
+      </button>
+      <div className="page-heading">
+        <div>
+          <h1>{service.title}</h1>
+          <p>{service.channel}</p>
+        </div>
+      </div>
+      <section className="panel service-conditions">
+        <h2>Как воспользоваться</h2>
+        <p>{service.preparation}</p>
+        <a
+          className="button primary"
+          href={service.action.href}
+          target={
+            service.action.href.startsWith("mailto:") ? undefined : "_blank"
+          }
+          rel="noopener noreferrer"
+        >
+          {service.action.label} <ArrowUpRight size={17} aria-hidden="true" />
+        </a>
+        <ServiceSources sources={service.sources} />
+      </section>
+    </>
+  );
+}
+
 export function ServiceCenter({
-  requests,
-  lessons,
   favorites,
   onFavorite,
   go,
 }: {
-  requests: Case[];
-  lessons: Lesson[];
   favorites: string[];
   onFavorite: (id: string, active: boolean) => Promise<void>;
   go: Navigate;
 }) {
   const [query, setQuery] = useState(""),
-    [category, setCategory] = useState("all"),
+    [category, setCategory] =
+      useState<(typeof serviceCategories)[number]["id"]>("all"),
     [onlyFavorites, setOnlyFavorites] = useState(false),
-    [situation, setSituation] = useState<number | null>(null),
     [saving, setSaving] = useState("");
-  const ready = requests.filter(
-      (r) => r.status === "ready" && r.service !== "question",
-    ),
-    active = requests.filter((r) => !["ready", "cancelled"].includes(r.status));
-  const catalog = services.filter(
+  const catalog = directory.filter(
     (s) =>
-      s.id !== "question" &&
+      (category === "all" ||
+        category === ("category" in s ? s.category : "documents") ||
+        (category === "documents" && isDocumentService(s.id))) &&
       (!onlyFavorites || favorites.includes(s.id)) &&
-      (category !== "international" ||
-        s.id.endsWith("-en") ||
-        s.id === "english-level") &&
-      (category !== "grades" ||
-        s.id === "grades-ru" ||
-        s.id === "transcript-en") &&
-      `${s.title} ${s.language} ${s.description}`
+      `${s.title} ${"language" in s ? s.language : s.channel} ${s.description}`
         .toLowerCase()
-        .includes(query.toLowerCase()),
+        .replaceAll("ё", "е")
+        .includes(query.trim().toLowerCase().replaceAll("ё", "е")),
   );
   async function favorite(id: string) {
     setSaving(id);
@@ -110,128 +170,65 @@ export function ServiceCenter({
   }
   return (
     <>
-      <div className="center-heading">
-        <div>
-          <span className="eyebrow">МГИМО · МОСКВА</span>
-          <h1>Центр сервиса «Студент»</h1>
-          <p>Заказ документов, заявки и обращения студентов.</p>
-        </div>
-        <span className="center-demo">
-          <ShieldCheck size={15} />
-          Учебный прототип
-        </span>
-      </div>
-      <div className="center-actions">
-        <button onClick={() => go("services")}>
-          <span className="center-action-icon">
-            <Inbox size={23} />
-          </span>
-          <span>
-            <strong>Мои обращения</strong>
-            <small>
-              {active.length
-                ? `${active.length} в работе · история и ответы`
-                : "История заявок и ответы сотрудников"}
-            </small>
-          </span>
-          <ChevronRight size={17} />
-        </button>
-        <button onClick={() => go("wallet")}>
-          <span className="center-action-icon">
-            <FolderOpen size={23} />
-          </span>
-          <span>
-            <strong>Мои документы</strong>
-            <small>
-              {ready.length
-                ? `${ready.length} готовых · скачать PDF`
-                : "Все готовые справки в одном месте"}
-            </small>
-          </span>
-          <ChevronRight size={17} />
-        </button>
-        <button onClick={() => go("order", "question")}>
-          <span className="center-action-icon">
-            <MessageCircle size={23} />
-          </span>
-          <span>
-            <strong>Задать вопрос</strong>
-            <small>Направим в нужное подразделение</small>
-          </span>
-          <ArrowUpRight size={17} />
-        </button>
-      </div>
-      <button className="employee-entry" onClick={() => go("employees")}>
-        <UsersRound size={24} />
-        <span>
-          <strong>Сотрудники</strong>
-          <small>Кто отвечает за ваш вопрос · контакты и часы приёма</small>
-        </span>
-        <ChevronRight size={18} />
-      </button>
       <section className="center-catalog">
-        <div className="center-section-heading">
-          <h2>Услуги и документы</h2>
-          <div className="center-favorite-tabs">
-            <button
-              className={!onlyFavorites ? "active" : ""}
-              onClick={() => setOnlyFavorites(false)}
-            >
-              Все услуги
-            </button>
-            <button
-              className={onlyFavorites ? "active" : ""}
-              onClick={() => setOnlyFavorites(true)}
-            >
-              <Star size={14} />
-              Избранное {favorites.length > 0 && <b>{favorites.length}</b>}
-            </button>
+        <h2>Каталог услуг</h2>
+        <div className="center-catalog-tools">
+          <div className="center-search">
+            <Search size={18} />
+            <input
+              aria-label="Найти услугу"
+              placeholder="Найти услугу"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+              <button
+                className="icon-btn"
+                aria-label="Очистить поиск услуг"
+                onClick={() => setQuery("")}
+              >
+                <X size={17} />
+              </button>
+            )}
           </div>
+          <button
+            className="center-favorite-filter"
+            aria-pressed={onlyFavorites}
+            onClick={() => {
+              if (!onlyFavorites) setCategory("all");
+              setOnlyFavorites(!onlyFavorites);
+            }}
+          >
+            <Star size={16} fill={onlyFavorites ? "currentColor" : "none"} />
+            Избранное
+          </button>
         </div>
-        <div className="center-search">
-          <Search size={20} />
-          <input
-            aria-label="Найти услугу"
-            placeholder="Найдите справку или нужную услугу"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          {query && (
+        <div
+          className="center-categories"
+          role="group"
+          aria-label="Категории услуг"
+        >
+          {serviceCategories.map((item) => (
             <button
-              className="icon-btn"
-              aria-label="Очистить поиск услуг"
-              onClick={() => setQuery("")}
+              key={item.id}
+              aria-pressed={category === item.id}
+              onClick={() => setCategory(item.id)}
             >
-              <X size={17} />
-            </button>
-          )}
-        </div>
-        <div className="center-categories" aria-label="Категории услуг">
-          {[
-            ["all", "Все документы"],
-            ["international", "На английском"],
-            ["grades", "Успеваемость"],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              aria-pressed={category === id}
-              className={category === id ? "active" : ""}
-              onClick={() => setCategory(id)}
-            >
-              {label}
+              {item.label}
             </button>
           ))}
         </div>
         <div className="center-service-grid">
           {catalog.map((s) => {
             const Icon = icons[s.icon];
+            const local = "language" in s;
             return (
               <article
                 key={s.id}
                 className={`center-service-card ${favorites.includes(s.id) ? "is-favorite" : ""}`}
               >
                 <button
-                  className="center-service-open"
+                  className={`center-service-open${local ? "" : " is-official"}`}
                   onClick={() => go("order", s.id)}
                 >
                   <span className="center-service-icon">
@@ -240,31 +237,37 @@ export function ServiceCenter({
                   <span>
                     <h3>
                       {s.title}
-                      <small>{s.language}</small>
+                      <small>{local ? s.language : s.channel}</small>
                     </h3>
                     <p>{s.description}</p>
-                    <span className="center-service-deadline">
-                      <Clock3 size={13} />
-                      {s.term}
-                    </span>
+                    {"term" in s && (
+                      <span className="center-service-deadline">
+                        <Clock3 size={13} />
+                        {s.term}
+                      </span>
+                    )}
                   </span>
                 </button>
-                <button
-                  className="center-star"
-                  aria-label={`${favorites.includes(s.id) ? "Убрать из избранного" : "В избранное"}: ${s.title}, ${s.language}`}
-                  aria-pressed={favorites.includes(s.id)}
-                  disabled={saving === s.id}
-                  onClick={() => void favorite(s.id)}
-                >
-                  {saving === s.id ? (
-                    <LoaderCircle size={17} className="spin" />
-                  ) : (
-                    <Star
-                      size={18}
-                      fill={favorites.includes(s.id) ? "currentColor" : "none"}
-                    />
-                  )}
-                </button>
+                {local && (
+                  <button
+                    className="center-star"
+                    aria-label={`${favorites.includes(s.id) ? "Убрать из избранного" : "В избранное"}: ${s.title}, ${s.language}`}
+                    aria-pressed={favorites.includes(s.id)}
+                    disabled={saving === s.id}
+                    onClick={() => void favorite(s.id)}
+                  >
+                    {saving === s.id ? (
+                      <LoaderCircle size={17} className="spin" />
+                    ) : (
+                      <Star
+                        size={18}
+                        fill={
+                          favorites.includes(s.id) ? "currentColor" : "none"
+                        }
+                      />
+                    )}
+                  </button>
+                )}
               </article>
             );
           })}
@@ -279,68 +282,25 @@ export function ServiceCenter({
             </h3>
             <p>
               {onlyFavorites && !favorites.length
-                ? "Нажмите на звёздочку у справки — она появится в избранном."
+                ? "Нажмите на звёздочку у услуги, чтобы добавить её сюда."
                 : "Попробуйте другой запрос или задайте вопрос сервисному центру."}
             </p>
             <button
               className="button secondary"
               onClick={() => {
                 setQuery("");
-                setCategory("all");
                 setOnlyFavorites(false);
+                setCategory("all");
               }}
             >
-              Все услуги
+              Показать все услуги
             </button>
           </div>
         )}
       </section>
-      <section className="center-situation">
-        <div className="center-situation-intro">
-          <span className="center-action-icon">
-            <Compass size={24} />
-          </span>
-          <div>
-            <h2>Что хотите сделать?</h2>
-            <p>Подскажем, с чего начать и какой документ выбрать.</p>
-          </div>
-        </div>
-        <div className="situation-buttons">
-          {situations.map((s, i) => (
-            <button
-              key={s.id}
-              aria-pressed={situation === i}
-              className={situation === i ? "active" : ""}
-              onClick={() => setSituation(i)}
-            >
-              {s.label}
-              <ArrowUpRight size={14} />
-            </button>
-          ))}
-        </div>
-        {situation !== null && (
-          <div className="situation-result" role="status">
-            <div>
-              <strong>
-                {services.find((s) => s.id === situations[situation].id)!.title}
-              </strong>
-              <p>{situations[situation].text}</p>
-            </div>
-            <button
-              className="button primary"
-              onClick={() => go("order", situations[situation].id)}
-            >
-              {situations[situation].id === "question"
-                ? "Написать"
-                : "Оформить"}
-              <ArrowRight size={16} />
-            </button>
-          </div>
-        )}
-      </section>
-      <div className="center-bottom-grid">
-        <section className="panel center-faq">
-          <h2>Частые вопросы</h2>
+      <details className="center-faq">
+        <summary>Частые вопросы</summary>
+        <div>
           {[
             [
               "Нужно ли приходить за справкой?",
@@ -348,15 +308,15 @@ export function ServiceCenter({
             ],
             [
               "Как узнать, что с моей заявкой?",
-              "Откройте «Мои обращения». В карточке есть статус, срок, комментарии сотрудника и готовый документ. Если нужно уточнение, ответьте там же.",
+              "Откройте вкладку «Обращения». В карточке есть статус, история и ответ сотрудника. Если нужно уточнение, ответьте там же.",
             ],
             [
               "Не знаю, в какой отдел писать",
-              "Выберите «Задать вопрос» и тему. Система определит подразделение; вам не нужно искать адрес сотрудника.",
+              "Откройте «Написать в центр сервиса» и выберите тему вопроса. По теме определится подразделение.",
             ],
             [
               "Сколько готовится документ?",
-              "Электронная справка об обучении RU в демо готова сразу. Остальные документы — до 3 рабочих дней, без учёта праздников в этой версии.",
+              "Электронная справка об обучении на русском и английском готова сразу. Срок остальных документов в демо — до 3 рабочих дней.",
             ],
           ].map(([q, a]) => (
             <details key={q}>
@@ -364,43 +324,8 @@ export function ServiceCenter({
               <p>{a}</p>
             </details>
           ))}
-        </section>
-        <section className="panel center-learning">
-          <div className="section-heading">
-            <h2>Учёба рядом</h2>
-            <CalendarDays size={19} />
-          </div>
-          <p className="muted">
-            Расписание, изменения и результаты обучения остаются под рукой.
-          </p>
-          {lessons.slice(0, 2).map((l) => (
-            <div className="center-mini-lesson" key={l.id}>
-              <strong>{l.start}</strong>
-              <span>
-                {l.subject}
-                <small>
-                  {l.room} · {l.teacher}
-                </small>
-              </span>
-            </div>
-          ))}
-          <div className="center-learning-links">
-            <button onClick={() => go("schedule")}>
-              Расписание
-              <ArrowRight size={15} />
-            </button>
-            <button onClick={() => go("grades")}>
-              Успеваемость
-              <ArrowRight size={15} />
-            </button>
-          </div>
-        </section>
-      </div>
-      <p className="page-note">
-        <MapPin size={15} />
-        Единое окно для студентов. Подразделения, точки выдачи и сведения в демо
-        вымышлены.
-      </p>
+        </div>
+      </details>
     </>
   );
 }
@@ -412,27 +337,11 @@ export function DocumentWallet({
   go: Navigate;
 }) {
   const docs = requests.filter(
-    (r) => r.status === "ready" && r.service !== "question",
+    (r) =>
+      ["ready", "issued"].includes(r.status) && isDocumentService(r.service),
   );
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <h1>Мои документы</h1>
-          <p>Готовые справки и выписки. Можно скачать в любой момент.</p>
-        </div>
-        <button className="button primary" onClick={() => go("today")}>
-          Заказать документ
-          <ArrowUpRight size={16} />
-        </button>
-      </div>
-      <div className="wallet-info">
-        <ShieldCheck size={23} />
-        <p>
-          В прототипе все PDF — учебные образцы с вымышленными данными, без
-          подписи вуза.
-        </p>
-      </div>
       {docs.length ? (
         <div className="wallet-grid">
           {docs.map((r) => {
@@ -444,14 +353,18 @@ export function DocumentWallet({
                 </span>
                 <span className="status status-ready">
                   <CheckCircle2 size={12} />
-                  Готово
+                  {r.status === "issued"
+                    ? "Выдано"
+                    : r.format === "paper"
+                      ? "К выдаче"
+                      : "Готово"}
                 </span>
                 <h2>{s.title}</h2>
                 <p>{s.language}</p>
                 <small>
                   Заявка от {dateLabel(r.created_at)} ·{" "}
                   {r.format === "paper"
-                    ? "Бумажный оригинал и PDF-образец"
+                    ? "Бумажная выдача и электронный образец"
                     : "Электронный PDF"}
                 </small>
                 <div>
@@ -489,14 +402,24 @@ export function DocumentWallet({
 }
 export function AppealForm({
   initialTopic = "documents",
-  user,
+  application,
+  assessments = [],
+  initialAssessment,
+  visitAbout,
+  requestVisit,
   back,
+  backLabel,
   create,
 }: {
   initialTopic?: string;
-  user: Student;
+  application?: ApplicationService;
+  assessments?: ReturnType<typeof getExamOptions>;
+  initialAssessment?: string;
+  visitAbout?: ApplicationService;
+  requestVisit?: () => void;
   back: () => void;
-  create: (payload: Record<string, unknown>) => Promise<void>;
+  backLabel: string;
+  create: (payload: Record<string, unknown> | FormData) => Promise<void>;
 }) {
   const [topic, setTopic] = useState(
       topics.some((item) => item.id === initialTopic)
@@ -506,19 +429,66 @@ export function AppealForm({
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const key = useRef(crypto.randomUUID());
+  const visit = application?.id === "visit-request";
+  const exam = application?.id === "exam-request";
+  const correction = application?.id === "profile-correction";
+  const contextual = exam || correction;
+  const [assessment, setAssessment] = useState(
+    initialAssessment === "unlisted" || assessments.some(({ value }) => value === initialAssessment)
+      ? initialAssessment ?? ""
+      : "",
+  );
+  const [reason, setReason] = useState("");
+  const needEvidence = requiresEvidence(application?.id ?? "", reason);
+  const [evidence, setEvidence] = useState<File | null>(null);
+  const evidenceInput = useRef<HTMLInputElement>(null);
+  function selectEvidence(file: File | null) {
+    setError("");
+    if (file) {
+      try {
+        evidenceFileType(file);
+      } catch (error) {
+        setError((error as Error).message);
+        if (evidenceInput.current) evidenceInput.current.value = "";
+        setEvidence(null);
+        return;
+      }
+    }
+    setEvidence(file);
+  }
+  function attachSample() {
+    if (evidenceInput.current) evidenceInput.current.value = "";
+    const text = exam
+      ? "Учебный образец. Выдуманная ситуация: участие в учебном мероприятии совпало с экзаменом. Студент просит согласовать другую дату."
+      : "Учебный образец. Выдуманная ситуация: сведения в студенческом профиле требуют исправления. Студент просит проверить запись.";
+    selectEvidence(new File([text + "\n"], "Учебный образец.txt", { type: "text/plain" }));
+  }
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     setBusy(true);
     setError("");
     try {
-      await create({
-        service: "question",
+      const payload = {
+        service: application?.id || "question",
         format: "electronic",
-        topic,
+        topic: application?.topic || topic,
         message: f.get("message"),
+        ...(visit && {
+          preferredTime: f.get("preferredTime"),
+          about: visitAbout?.id,
+        }),
+        ...(exam && { assessment, examReason: reason, examSubject: f.get("examSubject"), examDate: f.get("examDate") }),
+        ...(correction && { profileReason: reason, profileField: f.get("profileField") }),
         idempotencyKey: key.current,
-      });
+      };
+      if (needEvidence) {
+        if (!evidence) throw new Error("Прикрепите файл или выберите учебный образец");
+        const upload = new FormData();
+        upload.append("data", JSON.stringify(payload));
+        upload.append("evidence", evidence);
+        await create(upload);
+      } else await create(payload);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -528,20 +498,38 @@ export function AppealForm({
   return (
     <>
       <button className="back-button" onClick={back}>
-        ← В центр сервиса
+        <ArrowLeft size={17} />
+        {backLabel}
       </button>
       <div className="page-heading">
         <div>
-          <h1>Задать вопрос</h1>
-          <p>Опишите ситуацию один раз. Ответ придёт в вашу заявку.</p>
+          <h1>{application?.title || "Задать вопрос"}</h1>
+          <p>
+            {application
+              ? application.description
+              : "Ответ появится во вкладке «Обращения»."}
+          </p>
         </div>
       </div>
-      <form className="order-layout" onSubmit={submit}>
-        <section className="panel">
-          <h2>Чем можем помочь?</h2>
-          <p className="appeal-student">
-            {user.name} · {user.student_group}
-          </p>
+      {application && (
+        <section className="panel service-conditions">
+          <h2>Перед подачей</h2>
+          <p>{application.preparation}</p>
+          <p className="muted">{application.campusStatus}</p>
+          {application.sources.length > 0 && <ServiceSources sources={application.sources} />}
+          {requestVisit && (
+            <button
+              className="text-button"
+              type="button"
+              onClick={requestVisit}
+            >
+              <CalendarDays size={16} /> Запросить приём по этой услуге
+            </button>
+          )}
+        </section>
+      )}
+      <form className="panel appeal-form" onSubmit={submit}>
+        {!application && (
           <div className="form-field">
             <label htmlFor="appeal-topic">Тема обращения</label>
             <select
@@ -556,69 +544,154 @@ export function AppealForm({
               ))}
             </select>
           </div>
-          <div className="appeal-routing">
-            <CheckCircle2 size={17} />
-            <span>
-              Получит:{" "}
-              <strong>{topics.find((t) => t.id === topic)!.department}</strong>
-            </span>
-          </div>
+        )}
+        <div className="appeal-routing">
+          <CheckCircle2 size={17} />
+          <span>
+            {application ? "Куда попадёт демо-заявка" : "Получит"}{" "}
+            <strong>
+              {
+                topics.find(
+                  (t) =>
+                    t.id === (visitAbout?.topic || application?.topic || topic),
+                )!.department
+              }
+            </strong>
+          </span>
+        </div>
+        {visitAbout && (
+          <p>
+            Тема приёма — <strong>{visitAbout.title}</strong>
+          </p>
+        )}
+        {visit && (
           <div className="form-field">
-            <label htmlFor="appeal-message">Ваш вопрос *</label>
-            <textarea
-              name="message"
-              id="appeal-message"
-              rows={7}
-              minLength={10}
-              maxLength={2000}
+            <label htmlFor="preferred-time">Удобные дни и время *</label>
+            <input
+              id="preferred-time"
+              name="preferredTime"
               required
-              placeholder="Что случилось и какой результат вы хотите получить?"
+              maxLength={120}
+              placeholder="Например, 12 ноября после 14:00"
             />
-            <small>
-              Для демо описывайте вымышленную ситуацию. Не отправляйте
-              паспортные и платёжные данные.
-            </small>
           </div>
-          {error && (
-            <div className="error" role="alert">
-              {error}
+        )}
+        {contextual && (
+          <div className="form-field">
+            <label htmlFor="context-reason">{exam ? "Что нужно сделать?" : "Тип исправления"} *</label>
+            <select id="context-reason" value={reason} onChange={(event) => {
+              setReason(event.target.value);
+              selectEvidence(null);
+            }} required>
+              <option value="">Выберите вариант</option>
+              {Object.entries(exam ? examReasons : profileReasons).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {exam && (
+          <>
+            <div className="form-field">
+              <label htmlFor="assessment">Экзамен *</label>
+              <select id="assessment" value={assessment} onChange={(event) => setAssessment(event.target.value)} required>
+                <option value="">Выберите экзамен</option>
+                {assessments.map(({ value, subject, date }) => (
+                  <option key={value} value={value}>{subject}{date && ` · ${dateLabel(`${date}T12:00:00Z`)}`}</option>
+                ))}
+                <option value="unlisted">Экзамена или пересдачи нет в списке</option>
+              </select>
             </div>
-          )}
-          <button className="button primary appeal-submit" disabled={busy}>
+            {assessment === "unlisted" && (
+              <>
+                <div className="form-field">
+                  <label htmlFor="exam-subject">Дисциплина *</label>
+                  <input id="exam-subject" name="examSubject" maxLength={120} required />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="exam-date">Дата экзамена или пересдачи *</label>
+                  <input id="exam-date" name="examDate" type="date" required />
+                </div>
+              </>
+            )}
+          </>
+        )}
+        {correction && (
+          <div className="form-field">
+            <label htmlFor="profile-field">Какие сведения нужно проверить? *</label>
+            <select id="profile-field" name="profileField" defaultValue="" required>
+              <option value="">Выберите сведения</option>
+              {Object.entries(profileFields).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {needEvidence && (
+          <div className="form-field evidence-field">
+            <label htmlFor="request-evidence">Файл подтверждения *</label>
+            <small id="evidence-hint">Приложите вымышленный пример в TXT (UTF-8) или PNG до 512 КБ. Можно выбрать готовый образец.</small>
+            <input id="request-evidence" ref={evidenceInput} type="file" accept={evidenceAccept}
+              aria-describedby="evidence-hint" required={!evidence} disabled={busy}
+              onChange={(event) => selectEvidence(event.target.files?.[0] ?? null)} />
+            <button className="text-button" type="button" onClick={attachSample} disabled={busy}>Прикрепить учебный образец</button>
+            {evidence && (
+              <div className="selected-evidence">
+                <span role="status">Выбран файл «{evidence.name}»</span>
+                <button className="text-button" type="button" disabled={busy} onClick={() => {
+                  if (evidenceInput.current) evidenceInput.current.value = "";
+                  selectEvidence(null);
+                }}>Убрать</button>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="form-field">
+          <label htmlFor="appeal-message">
+            {application ? "Детали заявки" : "Ваш вопрос"} *
+          </label>
+          <textarea
+            name="message"
+            id="appeal-message"
+            rows={contextual ? 4 : 7}
+            minLength={10}
+            maxLength={visit || contextual ? 1700 : 2000}
+            required
+            placeholder={
+              exam
+                ? "Кратко опишите ситуацию. Для переноса укажите, когда сможете прийти."
+                : correction
+                  ? "Опишите, где заметили ошибку или что изменилось."
+                  : application
+                ? "Что нужно оформить или уточнить?"
+                : "Что случилось и какой результат вы хотите получить?"
+            }
+          />
+          <small>
+            Используйте вымышленные сведения, без паспортных, медицинских и
+            платёжных данных.
+          </small>
+        </div>
+        {error && (
+          <div className="error" role="alert">
+            {error}
+          </div>
+        )}
+        <div className="appeal-footer">
+          <button className="button primary" disabled={busy}>
             {busy ? (
               <LoaderCircle className="spin" size={18} />
             ) : (
               <Send size={17} />
             )}
-            Отправить обращение
+            {application ? "Отправить демо-заявку" : "Отправить обращение"}
           </button>
-        </section>
-        <aside className="panel order-summary">
-          <span className="service-icon">
-            <MessageCircle size={26} />
+          <span className="muted">
+            {application
+              ? "Статус и ответ появятся в «Обращениях»."
+              : "Срок ответа до 3 рабочих дней"}
           </span>
-          <h2>Информация об обращении</h2>
-          <p>
-            Тема определяет подразделение. История и ответ сохраняются в
-            карточке обращения.
-          </p>
-          <div className="order-term">
-            <Clock3 size={18} />
-            <span>
-              <strong>До 3 рабочих дней</strong>
-              <small>
-                Сотрудник ответит или запросит уточнение в карточке обращения.
-              </small>
-            </span>
-          </div>
-          <div className="order-term">
-            <Inbox size={18} />
-            <span>
-              <strong>В «Моих обращениях»</strong>
-              <small>Можно вернуться к ответу после выхода из аккаунта.</small>
-            </span>
-          </div>
-        </aside>
+        </div>
       </form>
     </>
   );

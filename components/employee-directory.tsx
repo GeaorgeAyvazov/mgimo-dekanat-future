@@ -16,23 +16,27 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { findEmployees, type Employee } from "@/lib/employees";
+import { findEmployees, findPublicContacts, type Employee } from "@/lib/employees";
+import { publicContacts } from "@/lib/public-contacts";
 import { topics } from "@/lib/catalog";
 
 export function EmployeeDirectory({
   selected,
   go,
   canAsk,
+  embedded = false,
 }: {
   selected: string;
   go: (view: string, id?: string) => void;
   canAsk: boolean;
+  embedded?: boolean;
 }) {
   const [people, setPeople] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const [query, setQuery] = useState("");
+  const [showPeople, setShowPeople] = useState(false);
   const [department, setDepartment] = useState("all");
   const [copied, setCopied] = useState("");
   const [copyError, setCopyError] = useState("");
@@ -125,17 +129,32 @@ export function EmployeeDirectory({
           <ArrowLeft size={16} /> Все сотрудники
         </button>
       )}
-      <div className="page-heading employee-heading">
-        <div>
-          <h1>{person ? person.name : "Сотрудники"}</h1>
-          <p>
-            {person
-              ? person.position
-              : "Найдите человека по имени, подразделению или своему вопросу."}
-          </p>
+      {!embedded && (
+        <div className="page-heading employee-heading">
+          <div>
+            <h1>{person ? person.name : "Сотрудники"}</h1>
+            <p>
+              {person
+                ? person.position
+                : "Найдите человека по имени, подразделению или своему вопросу."}
+            </p>
+          </div>
         </div>
-      </div>
-      <p className="directory-demo">
+      )}
+      {!selected && <div className="segmented" aria-label="Справочник">
+        <button className={!showPeople ? "active" : ""} onClick={() => { setShowPeople(false); reset(); }}>Подразделения МГИМО</button>
+        <button className={showPeople ? "active" : ""} onClick={() => { setShowPeople(true); reset(); }}>Сотрудники прототипа</button>
+      </div>}
+      {!selected && !showPeople ? <section className="panel">
+        <label className="directory-search"><Search size={18}/><input aria-label="Найти подразделение" placeholder="Факультет, оплата, договор…" value={query} onChange={e => setQuery(e.target.value)}/></label>
+        {findPublicContacts(publicContacts, query).map(unit => <article className="public-unit" key={unit.name}>
+          <h3>{unit.name}</h3><p>{unit.detail} {unit.room}</p>
+          <div>{unit.phones.map(phone => <a key={phone} href={"tel:" + phone.split("доб")[0].replace(/[^+0-9]/g, "")}>{phone}</a>)}
+          {unit.email && <a href={"mailto:" + unit.email}>{unit.email}</a>}
+          <a href={unit.source} target="_blank" rel="noreferrer">Страница МГИМО ↗</a></div>
+        </article>)}
+        {!findPublicContacts(publicContacts, query).length && <p role="status">По этому запросу подразделений нет. Попробуйте название факультета или услуги.</p>}
+      </section> : <><p className="directory-demo">
         <Building2 size={16} /> Демонстрационный справочник. Имена, контакты и
         часы приёма вымышлены.
       </p>
@@ -360,6 +379,7 @@ export function EmployeeDirectory({
           )}
         </>
       )}
+      </>}
       <span className="sr-only" role="status">
         {copied ? "Контакт скопирован" : ""}
       </span>
