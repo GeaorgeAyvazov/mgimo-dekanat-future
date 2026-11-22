@@ -13,7 +13,7 @@ https://github.com/GeaorgeAyvazov/mgimo-dekanat-future
 https://mgimo-dekanat-source-2026-final2.deed.page/file
 
 Описание процесса создания
-https://mgimo-dekanat-process-report-2026.deed.page/file
+https://github.com/GeaorgeAyvazov/mgimo-dekanat-future/blob/main/output/pdf/process-report.pdf
 
 Видео-демонстрация
 Поле можно оставить пустым.

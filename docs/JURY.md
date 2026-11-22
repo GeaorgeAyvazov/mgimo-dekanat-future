@@ -4,8 +4,7 @@
 
 - Прототип: https://dekanat-future-student.spiritedhome.chatgpt.site/
 - Исходный код: https://github.com/GeaorgeAyvazov/mgimo-dekanat-future
-- Описание процесса (PDF): `output/pdf/process-report.pdf` в репозитории
-- Резервная ссылка PDF: https://mgimo-dekanat-process-report-2026.deed.page/file
+- Описание процесса (PDF): https://github.com/GeaorgeAyvazov/mgimo-dekanat-future/blob/main/output/pdf/process-report.pdf
 
 ## Тестовые аккаунты
 
